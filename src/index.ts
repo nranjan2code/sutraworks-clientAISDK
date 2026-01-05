@@ -18,12 +18,13 @@
  * @version 2.0.0
  */
 
-// Main client
-export { SutraAI } from './core/client';
-
 // Core modules
+export { SutraAI } from './core/client';
 export { ConfigManager, DEFAULT_PROVIDER_CONFIGS } from './core/config';
 export { ProviderRegistry } from './core/registry';
+export type { ProviderConstructor, ProviderPlugin, ProviderHealth } from './core/registry';
+export { ModelRegistry, getModelRegistry, resetModelRegistry, MODEL_REGISTRY } from './core/models';
+export type { ExtendedModelInfo, ModelPricing } from './core/models';
 
 // Key management
 export { KeyManager } from './keys/manager';
@@ -60,8 +61,13 @@ export {
   createContentFilterMiddleware,
   createFallbackMiddleware,
   createMetricsMiddleware,
+  createValidationMiddleware,
+  createSanitizingMiddleware,
+  validateRequest,
+  sanitizeRequest,
+  MODEL_CONTEXT_WINDOWS,
 } from './middleware';
-export type { MiddlewareManager as IMiddlewareManager } from './middleware';
+export type { MiddlewareManager as IMiddlewareManager, ValidationOptions, ValidationError } from './middleware';
 
 // Streaming
 export {
@@ -110,6 +116,15 @@ export {
   generateCacheKeyAsync,
   createCache,
 } from './utils/cache';
+export {
+  createErrorFromResponse,
+  createErrorFromException,
+  createStreamError,
+  createValidationError,
+  isSutraError,
+  withErrorHandling,
+  ErrorAggregator,
+} from './utils/errors';
 
 // Types - Core
 export type {

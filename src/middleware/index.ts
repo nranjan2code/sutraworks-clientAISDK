@@ -17,6 +17,16 @@ import type {
 import { SutraError } from '../types';
 import { Encryption } from '../keys/encryption';
 
+// Re-export validation middleware
+export {
+  createValidationMiddleware,
+  createSanitizingMiddleware,
+  validateRequest,
+  sanitizeRequest,
+  MODEL_CONTEXT_WINDOWS,
+} from './validation';
+export type { ValidationOptions, ValidationError } from './validation';
+
 /**
  * Middleware manager for handling request/response pipelines
  */

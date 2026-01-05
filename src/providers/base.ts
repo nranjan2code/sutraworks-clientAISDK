@@ -16,6 +16,10 @@ import type {
 import { SutraError } from '../types';
 import { createRetryWrapper } from '../utils/retry';
 import { EventEmitter, EventFactory, generateRequestId } from '../utils/events';
+import {
+  createErrorFromResponse,
+  createErrorFromException,
+} from '../utils/errors';
 
 /**
  * Abstract base class for AI provider adapters
@@ -150,25 +154,7 @@ export abstract class BaseProvider {
         throw error;
       }
 
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new SutraError('Request timeout', 'TIMEOUT', {
-            provider: this.name,
-            retryable: true,
-          });
-        }
-
-        throw new SutraError(error.message, 'NETWORK_ERROR', {
-          provider: this.name,
-          retryable: true,
-          cause: error,
-        });
-      }
-
-      throw new SutraError('Unknown error', 'UNKNOWN_ERROR', {
-        provider: this.name,
-        details: error,
-      });
+      throw createErrorFromException(error, this.name);
     }
   }
 
@@ -183,59 +169,10 @@ export abstract class BaseProvider {
 
   /**
    * Handle error responses from the provider
+   * Uses centralized error handling for consistent error creation
    */
-  protected async handleErrorResponse(response: Response): Promise<never> {
-    let errorMessage = `Request failed with status ${response.status}`;
-    let errorDetails: unknown;
-
-    try {
-      const errorBody = await response.json();
-      errorDetails = errorBody;
-      
-      // Extract message from common error formats
-      if (errorBody.error?.message) {
-        errorMessage = errorBody.error.message;
-      } else if (errorBody.message) {
-        errorMessage = errorBody.message;
-      } else if (typeof errorBody.error === 'string') {
-        errorMessage = errorBody.error;
-      }
-    } catch {
-      // Use default error message
-    }
-
-    const errorCode = this.mapHttpStatusToErrorCode(response.status);
-    const retryable = response.status === 429 || response.status >= 500;
-
-    throw new SutraError(errorMessage, errorCode, {
-      provider: this.name,
-      statusCode: response.status,
-      retryable,
-      details: errorDetails,
-    });
-  }
-
-  /**
-   * Map HTTP status codes to error codes
-   */
-  protected mapHttpStatusToErrorCode(status: number): import('../types').SutraErrorCode {
-    switch (status) {
-      case 401:
-        return 'KEY_INVALID';
-      case 403:
-        return 'KEY_INVALID';
-      case 404:
-        return 'MODEL_NOT_FOUND';
-      case 429:
-        return 'RATE_LIMITED';
-      case 408:
-        return 'TIMEOUT';
-      default:
-        if (status >= 500) {
-          return 'REQUEST_FAILED';
-        }
-        return 'UNKNOWN_ERROR';
-    }
+  protected async handleErrorResponse(response: Response, requestId?: string): Promise<never> {
+    throw await createErrorFromResponse(response, this.name, requestId);
   }
 
   /**

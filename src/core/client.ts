@@ -20,8 +20,8 @@ import type {
   BatchRequest,
   BatchResponse,
   Middleware,
-  MiddlewareContext,
   PromptTemplate,
+  MiddlewareContext,
 } from '../types';
 import { SutraError } from '../types';
 import { ConfigManager } from './config';
@@ -31,7 +31,7 @@ import { EventEmitter, EventFactory } from '../utils/events';
 import { collectStream } from '../streaming/handler';
 import { MemoryCache, generateCacheKey, generateCacheKeyAsync } from '../utils/cache';
 import { TokenCounter, estimateMessagesTokens, estimateCost } from '../utils/tokens';
-import { MiddlewareManager } from '../middleware';
+import { MiddlewareManager, createValidationMiddleware } from '../middleware';
 import { sleep } from '../utils/retry';
 
 /**
@@ -51,8 +51,9 @@ export class SutraAI {
   private pendingRequests: Map<string, Promise<ChatResponse>> = new Map();
   private destroyed = false;
   private readonly deduplicateRequests: boolean;
+  private readonly enableValidation: boolean;
 
-  constructor(config?: SutraConfig) {
+  constructor(config?: SutraConfig & { enableValidation?: boolean }) {
     this.config = new ConfigManager(config);
     this.events = new EventEmitter();
     this.keyManager = new KeyManager(
@@ -62,7 +63,8 @@ export class SutraAI {
     this.registry = new ProviderRegistry(
       this.config,
       this.events,
-      (provider) => this.keyManager.requireKey(provider)
+      (provider) => this.keyManager.requireKey(provider),
+      { useCircuitBreaker: true }
     );
 
     // Initialize cache
@@ -74,6 +76,14 @@ export class SutraAI {
 
     // Initialize middleware
     this.middlewareManager = new MiddlewareManager();
+    
+    // Add validation middleware by default (enterprise-grade)
+    this.enableValidation = config?.enableValidation ?? true;
+    if (this.enableValidation) {
+      this.middlewareManager.use(createValidationMiddleware({ strict: true }));
+    }
+    
+    // Add user-provided middleware
     if (config?.middleware) {
       for (const mw of config.middleware) {
         this.middlewareManager.use(mw);
@@ -244,7 +254,7 @@ export class SutraAI {
 
     try {
       // Execute request middleware
-      let processedRequest = await this.middlewareManager.executeRequestMiddleware(
+      const processedRequest = await this.middlewareManager.executeRequestMiddleware(
         request,
         context
       );
@@ -389,7 +399,7 @@ export class SutraAI {
     this.ensureNotDestroyed();
 
     const context = this.middlewareManager.createContext();
-    let processedRequest = await this.middlewareManager.executeRequestMiddleware(
+    const processedRequest = await this.middlewareManager.executeRequestMiddleware(
       { ...request, stream: true } as ChatRequest,
       context
     );
@@ -410,7 +420,7 @@ export class SutraAI {
     this.ensureNotDestroyed();
 
     const context = this.middlewareManager.createContext();
-    let processedRequest = await this.middlewareManager.executeRequestMiddleware(
+    const processedRequest = await this.middlewareManager.executeRequestMiddleware(
       { ...request, stream: true } as ChatRequest,
       context
     );

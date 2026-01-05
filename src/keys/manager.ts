@@ -11,6 +11,43 @@ import { EventEmitter, EventFactory } from '../utils/events';
 import { Encryption } from './encryption';
 
 /**
+ * Simple mutex implementation for async operations
+ * Guarantees mutual exclusion using a queue-based approach
+ */
+class AsyncMutex {
+  private locked = false;
+  private readonly queue: Array<(release: () => void) => void> = [];
+
+  async acquire(): Promise<() => void> {
+    return new Promise((resolve) => {
+      if (!this.locked) {
+        // Lock is free, acquire immediately
+        this.locked = true;
+        resolve(() => this.release());
+      } else {
+        // Lock is held, queue this waiter
+        this.queue.push(resolve);
+      }
+    });
+  }
+
+  private release(): void {
+    const next = this.queue.shift();
+    if (next) {
+      // Transfer lock to next waiter (lock stays true)
+      next(() => this.release());
+    } else {
+      // No waiters, unlock
+      this.locked = false;
+    }
+  }
+
+  isLocked(): boolean {
+    return this.locked;
+  }
+}
+
+/**
  * Manages API keys for all providers
  * Keys are stored client-side and never sent to any server
  * 
@@ -19,6 +56,7 @@ import { Encryption } from './encryption';
  * - Optional encryption at rest
  * - Auto-clear timers with race condition protection
  * - Fallback storage on failure
+ * - Thread-safe operations using mutex locks
  */
 export class KeyManager {
   private storage: IKeyStorage;
@@ -27,7 +65,8 @@ export class KeyManager {
   private autoClearTimers: Map<ProviderName, ReturnType<typeof setTimeout>> = new Map();
   private readonly autoClearAfter?: number;
   private currentOptions: KeyStorageOptions;
-  private keyLocks: Map<ProviderName, Promise<void>> = new Map();
+  private readonly keyLocks: Map<ProviderName, AsyncMutex> = new Map();
+  private readonly globalLock = new AsyncMutex();
 
   constructor(options: KeyStorageOptions, events: EventEmitter) {
     this.currentOptions = { ...options };
@@ -57,26 +96,35 @@ export class KeyManager {
   }
 
   /**
+   * Get or create mutex for a specific provider
+   * Uses global lock to ensure atomic mutex creation
+   */
+  private async getMutex(provider: ProviderName): Promise<AsyncMutex> {
+    let mutex = this.keyLocks.get(provider);
+    if (!mutex) {
+      // Use global lock to prevent race condition on mutex creation
+      const releaseGlobal = await this.globalLock.acquire();
+      try {
+        // Double-check after acquiring global lock
+        mutex = this.keyLocks.get(provider);
+        if (!mutex) {
+          mutex = new AsyncMutex();
+          this.keyLocks.set(provider, mutex);
+        }
+      } finally {
+        releaseGlobal();
+      }
+    }
+    return mutex;
+  }
+
+  /**
    * Acquire lock for key operations (prevents race conditions)
+   * Uses proper mutex pattern for atomic lock acquisition
    */
   private async acquireLock(provider: ProviderName): Promise<() => void> {
-    // Wait for existing lock to release
-    const existingLock = this.keyLocks.get(provider);
-    if (existingLock) {
-      await existingLock;
-    }
-
-    // Create new lock
-    let releaseLock: () => void;
-    const lockPromise = new Promise<void>((resolve) => {
-      releaseLock = resolve;
-    });
-    this.keyLocks.set(provider, lockPromise);
-
-    return () => {
-      this.keyLocks.delete(provider);
-      releaseLock!();
-    };
+    const mutex = await this.getMutex(provider);
+    return mutex.acquire();
   }
 
   /**

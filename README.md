@@ -2,7 +2,8 @@
   <img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version 2.0.0" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License" />
-  <img src="https://img.shields.io/badge/tests-31%20passing-brightgreen.svg" alt="Tests Passing" />
+  <img src="https://img.shields.io/badge/tests-482%20passing-brightgreen.svg" alt="Tests Passing" />
+  <img src="https://img.shields.io/badge/coverage-80%25-brightgreen.svg" alt="Coverage" />
   <img src="https://img.shields.io/badge/zero-dependencies-orange.svg" alt="Zero Dependencies" />
 </p>
 
@@ -443,8 +444,11 @@ src/
 # Install dependencies
 npm install
 
-# Run tests (31 tests)
+# Run tests (482 tests, 80%+ coverage)
 npm test
+
+# Run tests with coverage report
+npm run test:coverage
 
 # Build all formats (ESM, CJS, UMD, Types)
 npm run build

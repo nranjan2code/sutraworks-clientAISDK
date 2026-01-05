@@ -498,6 +498,7 @@ export async function collectStream(
 /**
  * Create a buffered stream that collects chunks before yielding
  * Useful for reducing UI updates
+ * Properly cleans up resources on early termination
  */
 export async function* bufferedStream(
   chunks: AsyncIterable<ChatStreamDelta>,
@@ -510,15 +511,19 @@ export async function* bufferedStream(
   const { bufferSize = 5, bufferTimeout = 50, signal } = options;
   let buffer: ChatStreamDelta[] = [];
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  let resolver: ((value: ChatStreamDelta[] | null) => void) | undefined;
+  let pendingResolve: ((value: ChatStreamDelta[] | null) => void) | undefined;
+
+  const clearPendingTimeout = () => {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+  };
 
   const flush = (): ChatStreamDelta[] => {
     const result = buffer;
     buffer = [];
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = undefined;
-    }
+    clearPendingTimeout();
     return result;
   };
 
@@ -574,22 +579,27 @@ export async function* bufferedStream(
       if (buffer.length >= bufferSize) {
         const merged = mergeChunks(flush());
         if (merged) yield merged;
-      } else if (!timeoutId) {
-        // Set timeout for partial buffer
+      } else if (timeoutId === undefined) {
+        // Set timeout for partial buffer flush
         timeoutId = setTimeout(() => {
-          if (resolver) {
-            resolver(flush());
-            resolver = undefined;
+          timeoutId = undefined;
+          if (pendingResolve) {
+            pendingResolve(flush());
+            pendingResolve = undefined;
           }
         }, bufferTimeout);
       }
     }
 
-    // Flush remaining
+    // Flush remaining buffer
     const merged = mergeChunks(flush());
     if (merged) yield merged;
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    // CRITICAL: Always clean up timeout on generator termination
+    // This handles break, return, throw, and normal completion
+    clearPendingTimeout();
+    buffer = []; // Clear buffer to free memory
+    pendingResolve = undefined;
   }
 }
 
