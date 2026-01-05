@@ -1,0 +1,191 @@
+/**
+ * Sutraworks Client AI SDK v2.0
+ * Universal client-side AI SDK with BYOK (Bring Your Own Key) architecture
+ * 
+ * Features:
+ * - Zero-trust server model with client-side key storage
+ * - Support for 12+ AI providers
+ * - Streaming with proper cleanup and abort handling
+ * - Middleware pipeline for request/response transformation
+ * - Request batching and deduplication
+ * - Built-in prompt templates
+ * - Token counting and cost estimation
+ * - Comprehensive caching with SHA-256 hashing
+ * - OWASP 2024 compliant encryption
+ *
+ * @packageDocumentation
+ * @module @sutraworks/client-ai-sdk
+ * @version 2.0.0
+ */
+
+// Main client
+export { SutraAI } from './core/client';
+
+// Core modules
+export { ConfigManager, DEFAULT_PROVIDER_CONFIGS } from './core/config';
+export { ProviderRegistry } from './core/registry';
+
+// Key management
+export { KeyManager } from './keys/manager';
+export { Encryption } from './keys/encryption';
+export {
+  createStorage,
+  MemoryStorage,
+  LocalStorageImpl,
+  SessionStorageImpl,
+  IndexedDBStorage,
+} from './keys/storage';
+export type { IKeyStorage } from './keys/storage';
+
+// Providers
+export { BaseProvider } from './providers/base';
+export { OpenAIProvider } from './providers/openai';
+export { AnthropicProvider } from './providers/anthropic';
+export { GoogleProvider } from './providers/google';
+export { OllamaProvider } from './providers/ollama';
+export { MistralProvider } from './providers/mistral';
+export { GroqProvider } from './providers/groq';
+export { CohereProvider } from './providers/cohere';
+export { TogetherProvider } from './providers/together';
+export { FireworksProvider } from './providers/fireworks';
+export { PerplexityProvider } from './providers/perplexity';
+
+// Middleware
+export {
+  MiddlewareManager,
+  createLoggingMiddleware,
+  createRetryMiddleware,
+  createRateLimitMiddleware,
+  createTimeoutMiddleware,
+  createContentFilterMiddleware,
+  createFallbackMiddleware,
+  createMetricsMiddleware,
+} from './middleware';
+export type { MiddlewareManager as IMiddlewareManager } from './middleware';
+
+// Streaming
+export {
+  StreamHandler,
+  streamContent,
+  collectStream,
+  bufferedStream,
+  timedStream,
+} from './streaming/handler';
+export type {
+  StreamHandlerOptions,
+  StreamState,
+  StreamProgress,
+  StreamStats,
+} from './streaming/handler';
+export {
+  parseSSEStream,
+  parseSSEData,
+  parseJSONStream,
+  parseNDJSONStream,
+} from './streaming/parser';
+
+// Utilities
+export { EventEmitter, EventFactory, generateRequestId } from './utils/events';
+export {
+  withRetry,
+  defaultShouldRetry,
+  calculateDelay,
+  extractRetryAfter,
+  sleep,
+  createRetryWrapper,
+  CircuitBreaker,
+} from './utils/retry';
+export {
+  estimateTokens,
+  estimateMessagesTokens,
+  estimateCost,
+  formatCost,
+  TokenCounter,
+  MODEL_PRICING,
+} from './utils/tokens';
+export {
+  MemoryCache,
+  IndexedDBCache,
+  generateCacheKey,
+  generateCacheKeyAsync,
+  createCache,
+} from './utils/cache';
+
+// Types - Core
+export type {
+  // Provider types
+  ProviderName,
+  ProviderConfig,
+
+  // Message types
+  MessageRole,
+  Message,
+  ContentPart,
+  ToolCall,
+  Tool,
+
+  // Request types
+  BaseRequestOptions,
+  ChatRequest,
+  CompletionRequest,
+  EmbeddingRequest,
+  RequestPriority,
+
+  // Batch types
+  BatchRequest,
+  BatchResponse,
+
+  // Response types
+  Usage,
+  ChatChoice,
+  ChatResponse,
+  ChatStreamDelta,
+  EmbeddingResponse,
+  ModelInfo,
+
+  // Middleware types
+  Middleware,
+  MiddlewareContext,
+  RequestMiddleware,
+  ResponseMiddleware,
+  ErrorMiddleware,
+
+  // Template types
+  PromptTemplate,
+  TemplateVariable,
+
+  // Key management types
+  KeyStorageType,
+  KeyStorageOptions,
+  StoredKeyMeta,
+
+  // Event types
+  SutraEventType,
+  SutraEventBase,
+  RequestEvent,
+  StreamEvent,
+  SutraEventListener,
+
+  // Cache types
+  CacheEntry,
+  CacheOptions,
+
+  // Rate limit types
+  RateLimitConfig,
+
+  // Config types
+  SutraConfig,
+
+  // Error types
+  SutraErrorCode,
+} from './types';
+
+// Error class
+export { SutraError } from './types';
+
+// Version
+export const VERSION = '2.0.0';
+
+// Default export
+import { SutraAI } from './core/client';
+export default SutraAI;

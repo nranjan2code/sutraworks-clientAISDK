@@ -1,0 +1,114 @@
+{
+  "name": "@sutraworks/client-ai-sdk",
+  "version": "2.0.0",
+  "description": "Universal client-side AI SDK with BYOK architecture - Use your own keys, run on your own compute",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "browser": "dist/umd/sutra-ai.min.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./providers/*": {
+      "import": "./dist/esm/providers/*.js",
+      "require": "./dist/cjs/providers/*.js"
+    },
+    "./middleware": {
+      "import": "./dist/esm/middleware/index.js",
+      "require": "./dist/cjs/middleware/index.js",
+      "types": "./dist/types/middleware/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:umd && npm run build:types",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:cjs": "tsc --project tsconfig.cjs.json",
+    "build:umd": "vite build --config vite.umd.config.ts",
+    "build:types": "tsc --project tsconfig.types.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run build && npm run test",
+    "size": "npm run build && size-limit"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "openai",
+    "anthropic",
+    "claude",
+    "gemini",
+    "ollama",
+    "mistral",
+    "groq",
+    "cohere",
+    "client-side",
+    "byok",
+    "browser",
+    "sdk",
+    "streaming",
+    "chat",
+    "completion",
+    "embeddings",
+    "middleware",
+    "zero-dependency"
+  ],
+  "author": "Sutraworks",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sutraworks/client-ai-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/sutraworks/client-ai-sdk/issues"
+  },
+  "homepage": "https://github.com/sutraworks/client-ai-sdk#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/sutraworks"
+  },
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^11.2.0",
+    "@types/node": "^22.15.21",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "@vitest/coverage-v8": "^3.1.4",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.5.3",
+    "size-limit": "^11.2.0",
+    "terser": "^5.39.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "sideEffects": false,
+  "size-limit": [
+    {
+      "path": "dist/esm/index.js",
+      "limit": "50 KB"
+    },
+    {
+      "path": "dist/umd/sutra-ai.min.js",
+      "limit": "60 KB"
+    }
+  ]
+}
