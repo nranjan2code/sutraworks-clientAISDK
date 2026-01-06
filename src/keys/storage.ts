@@ -42,7 +42,7 @@ export class MemoryStorage implements IKeyStorage {
 
   async set(provider: ProviderName, key: string): Promise<void> {
     let storedKey = key;
-    
+
     if (this.encrypt) {
       const encKey = await this.ensureEncryptionKey();
       storedKey = await Encryption.encrypt(key, encKey);
@@ -103,11 +103,13 @@ export class LocalStorageImpl implements IKeyStorage {
   private readonly prefix: string;
   private readonly encrypt: boolean;
   private readonly password?: string;
+  private readonly iterations?: number;
 
-  constructor(options?: { prefix?: string; encrypt?: boolean; encryptionKey?: string }) {
+  constructor(options?: { prefix?: string; encrypt?: boolean; encryptionKey?: string; encryptionIterations?: number }) {
     this.prefix = options?.prefix ?? 'sutra_key_';
     this.encrypt = options?.encrypt ?? false;
     this.password = options?.encryptionKey;
+    this.iterations = options?.encryptionIterations;
 
     if (!this.isAvailable()) {
       throw new SutraError('localStorage is not available', 'STORAGE_ERROR');
@@ -138,7 +140,7 @@ export class LocalStorageImpl implements IKeyStorage {
 
     if (this.encrypt) {
       if (this.password) {
-        storedKey = await Encryption.encryptWithPassword(key, this.password);
+        storedKey = await Encryption.encryptWithPassword(key, this.password, this.iterations);
       } else {
         throw new SutraError(
           'Encryption enabled but no encryption key provided',
@@ -225,11 +227,13 @@ export class SessionStorageImpl implements IKeyStorage {
   private readonly prefix: string;
   private readonly encrypt: boolean;
   private readonly password?: string;
+  private readonly iterations?: number;
 
-  constructor(options?: { prefix?: string; encrypt?: boolean; encryptionKey?: string }) {
+  constructor(options?: { prefix?: string; encrypt?: boolean; encryptionKey?: string; encryptionIterations?: number }) {
     this.prefix = options?.prefix ?? 'sutra_key_';
     this.encrypt = options?.encrypt ?? false;
     this.password = options?.encryptionKey;
+    this.iterations = options?.encryptionIterations;
 
     if (!this.isAvailable()) {
       throw new SutraError('sessionStorage is not available', 'STORAGE_ERROR');
@@ -260,7 +264,7 @@ export class SessionStorageImpl implements IKeyStorage {
 
     if (this.encrypt) {
       if (this.password) {
-        storedKey = await Encryption.encryptWithPassword(key, this.password);
+        storedKey = await Encryption.encryptWithPassword(key, this.password, this.iterations);
       } else {
         throw new SutraError(
           'Encryption enabled but no encryption key provided',
@@ -348,12 +352,14 @@ export class IndexedDBStorage implements IKeyStorage {
   private readonly storeName: string = 'keys';
   private readonly encrypt: boolean;
   private readonly password?: string;
+  private readonly iterations?: number;
   private db: IDBDatabase | null = null;
 
-  constructor(options?: { prefix?: string; encrypt?: boolean; encryptionKey?: string }) {
+  constructor(options?: { prefix?: string; encrypt?: boolean; encryptionKey?: string; encryptionIterations?: number }) {
     this.dbName = `${options?.prefix ?? 'sutra_'}keystore`;
     this.encrypt = options?.encrypt ?? false;
     this.password = options?.encryptionKey;
+    this.iterations = options?.encryptionIterations;
   }
 
   private async getDB(): Promise<IDBDatabase> {
@@ -385,7 +391,7 @@ export class IndexedDBStorage implements IKeyStorage {
 
     if (this.encrypt) {
       if (this.password) {
-        storedKey = await Encryption.encryptWithPassword(key, this.password);
+        storedKey = await Encryption.encryptWithPassword(key, this.password, this.iterations);
       } else {
         throw new SutraError(
           'Encryption enabled but no encryption key provided',
@@ -541,6 +547,7 @@ export function createStorage(options: KeyStorageOptions): IKeyStorage {
     prefix: options.prefix,
     encrypt: options.encrypt,
     encryptionKey: options.encryptionKey,
+    encryptionIterations: options.encryptionIterations,
   };
 
   switch (options.type) {

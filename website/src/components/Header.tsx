@@ -39,6 +39,12 @@ export default function Header() {
                             Features
                         </Link>
                         <Link
+                            href="/playground"
+                            className="text-gray-400 hover:text-white transition-colors font-medium"
+                        >
+                            Playground
+                        </Link>
+                        <Link
                             href="/providers"
                             className="text-gray-400 hover:text-white transition-colors font-medium"
                         >
@@ -107,6 +113,13 @@ export default function Header() {
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Features
+                            </Link>
+                            <Link
+                                href="/playground"
+                                className="text-gray-400 hover:text-white transition-colors font-medium"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                Playground
                             </Link>
                             <Link
                                 href="/providers"

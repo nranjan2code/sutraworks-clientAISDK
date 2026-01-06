@@ -29,9 +29,9 @@ export class Encryption {
    * Check if Web Crypto API is available
    */
   static isAvailable(): boolean {
-    return typeof crypto !== 'undefined' && 
-           typeof crypto.subtle !== 'undefined' &&
-           typeof crypto.getRandomValues !== 'undefined';
+    return typeof crypto !== 'undefined' &&
+      typeof crypto.subtle !== 'undefined' &&
+      typeof crypto.getRandomValues !== 'undefined';
   }
 
   /**
@@ -64,7 +64,7 @@ export class Encryption {
    * Uses OWASP 2024 recommended iterations
    */
   static async deriveKey(
-    password: string, 
+    password: string,
     salt?: Uint8Array,
     iterations: number = this.ITERATIONS
   ): Promise<{ key: CryptoKey; salt: Uint8Array }> {
@@ -123,8 +123,8 @@ export class Encryption {
       // Encrypt data
       const encoded = new TextEncoder().encode(data);
       const ciphertext = await crypto.subtle.encrypt(
-        { 
-          name: this.ALGORITHM, 
+        {
+          name: this.ALGORITHM,
           iv,
           tagLength: this.TAG_LENGTH
         },
@@ -141,7 +141,7 @@ export class Encryption {
       // Return base64 encoded
       return this.arrayBufferToBase64(combined);
     } catch (error) {
-      throw new SutraError('Encryption failed', 'ENCRYPTION_ERROR', { 
+      throw new SutraError('Encryption failed', 'ENCRYPTION_ERROR', {
         cause: error instanceof Error ? error : new Error(String(error))
       });
     }
@@ -173,8 +173,8 @@ export class Encryption {
 
       // Decrypt
       const decrypted = await crypto.subtle.decrypt(
-        { 
-          name: this.ALGORITHM, 
+        {
+          name: this.ALGORITHM,
           iv,
           tagLength: this.TAG_LENGTH
         },
@@ -185,7 +185,7 @@ export class Encryption {
       return new TextDecoder().decode(decrypted);
     } catch (error) {
       if (error instanceof SutraError) throw error;
-      throw new SutraError('Decryption failed - data may be corrupted or key is incorrect', 'ENCRYPTION_ERROR', { 
+      throw new SutraError('Decryption failed - data may be corrupted or key is incorrect', 'ENCRYPTION_ERROR', {
         cause: error instanceof Error ? error : new Error(String(error))
       });
     }
@@ -195,13 +195,17 @@ export class Encryption {
    * Encrypt with password (combines key derivation and encryption)
    * Format: version:iterations:salt:encryptedData
    */
-  static async encryptWithPassword(data: string, password: string): Promise<string> {
-    const { key, salt } = await this.deriveKey(password);
+  static async encryptWithPassword(
+    data: string,
+    password: string,
+    iterations: number = this.ITERATIONS
+  ): Promise<string> {
+    const { key, salt } = await this.deriveKey(password, undefined, iterations);
     const encrypted = await this.encrypt(data, key);
 
     // Format: version|iterations|salt|encrypted
     const saltBase64 = this.arrayBufferToBase64(salt);
-    return `${this.VERSION}|${this.ITERATIONS}|${saltBase64}|${encrypted}`;
+    return `${this.VERSION}|${iterations}|${saltBase64}|${encrypted}`;
   }
 
   /**
@@ -209,7 +213,7 @@ export class Encryption {
    */
   static async decryptWithPassword(encryptedData: string, password: string): Promise<string> {
     const parts = encryptedData.split('|');
-    
+
     // Support legacy format (salt:encrypted)
     if (parts.length === 2) {
       const [saltBase64, encrypted] = parts;
@@ -224,7 +228,7 @@ export class Encryption {
 
     const [_version, iterationsStr, saltBase64, encrypted] = parts;
     const iterations = parseInt(iterationsStr, 10);
-    
+
     if (isNaN(iterations) || iterations < 10000) {
       throw new SutraError('Invalid iteration count', 'ENCRYPTION_ERROR');
     }
@@ -281,7 +285,7 @@ export class Encryption {
     if (a.length !== b.length) {
       return false;
     }
-    
+
     let result = 0;
     for (let i = 0; i < a.length; i++) {
       result |= a.charCodeAt(i) ^ b.charCodeAt(i);
@@ -306,12 +310,12 @@ export class Encryption {
     this.ensureAvailable();
     const array = new Uint8Array(16);
     crypto.getRandomValues(array);
-    
+
     // Set version to 4
     array[6] = (array[6] & 0x0f) | 0x40;
     // Set variant to RFC4122
     array[8] = (array[8] & 0x3f) | 0x80;
-    
+
     const hex = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   }

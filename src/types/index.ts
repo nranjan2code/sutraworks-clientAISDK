@@ -356,6 +356,8 @@ export interface KeyStorageOptions {
   autoClearAfter?: number;
   /** Fallback storage if primary fails */
   fallback?: KeyStorageType;
+  /** Encryption iterations (PBKDF2) - lower for mobile performance, higher for security. Default: 600,000 */
+  encryptionIterations?: number;
 }
 
 /** Stored key metadata */
