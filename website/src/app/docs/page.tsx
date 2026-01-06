@@ -150,6 +150,33 @@ export default function DocsPage() {
                         </div>
                     </section>
 
+                    {/* Showcase */}
+                    <section className="mb-16">
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                            <span className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 text-sm">★</span>
+                            Showcase Application
+                        </h2>
+                        <div className="glass-card p-8 border-pink-500/20 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-pink-500/20 transition-colors"></div>
+
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-bold mb-2 text-white">Smart Support Dashboard</h3>
+                                <p className="text-gray-400 mb-6 max-w-2xl">
+                                    Explore a production-ready reference implementation featuring intelligent ticket routing,
+                                    sentiment analysis, and auto-response drafting — all powered by client-side AI.
+                                </p>
+                                <div className="flex gap-4">
+                                    <a href="/docs/showcase" className="btn-primary">
+                                        Read Architecture Guide
+                                    </a>
+                                    <a href="/demo" className="btn-secondary">
+                                        View Live Demo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Links */}
                     <section>
                         <h2 className="text-2xl font-bold mb-6">More Resources</h2>

@@ -39,6 +39,16 @@ export default function Header() {
                             Features
                         </Link>
                         <Link
+                            href="/demo"
+                            className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium flex items-center gap-1"
+                        >
+                            <span className="relative flex h-2 w-2 mr-1">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                            </span>
+                            Live Demo
+                        </Link>
+                        <Link
                             href="/playground"
                             className="text-gray-400 hover:text-white transition-colors font-medium"
                         >
