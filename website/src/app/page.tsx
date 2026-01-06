@@ -118,7 +118,7 @@ export default function Home() {
                   <span className="text-purple-400">await</span> ai.
                   <span className="text-cyan-400">chat</span>({"{"}{"\n"}
                   {"  "}provider: <span className="text-green-400">&apos;openai&apos;</span>,{"\n"}
-                  {"  "}model: <span className="text-green-400">&apos;gpt-4-turbo&apos;</span>,{"\n"}
+                  {"  "}model: <span className="text-green-400">&apos;gpt-4o&apos;</span>,{"\n"}
                   {"  "}messages: [{"{"} role: <span className="text-green-400">&apos;user&apos;</span>, content: <span className="text-green-400">&apos;Hello!&apos;</span> {"}"}]{"\n"}
                   {"}"});
                 </code>

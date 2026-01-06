@@ -17,7 +17,7 @@ export const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   openai: {
     name: 'openai',
     baseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4-turbo',
+    defaultModel: 'gpt-4o',
     timeout: 60000,
     maxRetries: 3,
   },

@@ -66,34 +66,50 @@ export function estimateMessagesTokens(
  */
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   // OpenAI
+  'gpt-4o': { input: 2.5, output: 10 },
+  'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10, output: 30 },
-  'gpt-4-turbo-preview': { input: 10, output: 30 },
   'gpt-4': { input: 30, output: 60 },
-  'gpt-4-32k': { input: 60, output: 120 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
-  'gpt-3.5-turbo-16k': { input: 1, output: 2 },
+  'o1': { input: 15, output: 60 },
+  'o1-mini': { input: 3, output: 12 },
 
   // Anthropic
+  'claude-sonnet-4-20250514': { input: 3, output: 15 }, // Claude Sonnet 4
+  'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
+  'claude-3-5-haiku-20241022': { input: 0.8, output: 4 },
   'claude-3-opus-20240229': { input: 15, output: 75 },
   'claude-3-sonnet-20240229': { input: 3, output: 15 },
-  'claude-3-haiku-20240307': { input: 0.25, output: 1.25 },
 
   // Google
+  'gemini-2.0-flash': { input: 0.075, output: 0.3 },
+  'gemini-2.0-flash-thinking': { input: 0.075, output: 0.3 },
+  'gemini-1.5-pro': { input: 1.25, output: 5 },
+  'gemini-1.5-flash': { input: 0.075, output: 0.3 },
   'gemini-pro': { input: 0.5, output: 1.5 },
-  'gemini-ultra': { input: 10, output: 30 },
 
   // Mistral
-  'mistral-large-latest': { input: 4, output: 12 },
+  'mistral-large-latest': { input: 2, output: 6 },
   'mistral-medium-latest': { input: 2.7, output: 8.1 },
-  'mistral-small-latest': { input: 1, output: 3 },
+  'mistral-small-latest': { input: 0.2, output: 0.6 },
+  'codestral-latest': { input: 0.2, output: 0.6 },
 
-  // Groq (very affordable)
-  'mixtral-8x7b-32768': { input: 0.27, output: 0.27 },
-  'llama-3-70b-8192': { input: 0.59, output: 0.79 },
+  // Groq
+  'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },
+  'llama-3.1-8b-instant': { input: 0.05, output: 0.08 },
+  'mixtral-8x7b-32768': { input: 0.24, output: 0.24 },
 
   // Cohere
-  'command-r-plus': { input: 3, output: 15 },
-  'command-r': { input: 0.5, output: 1.5 },
+  'command-r-plus': { input: 2.5, output: 10 },
+  'command-r': { input: 0.15, output: 0.6 },
+
+  // DeepSeek
+  'deepseek-chat': { input: 0.14, output: 0.28 },
+  'deepseek-reasoner': { input: 0.55, output: 2.19 },
+
+  // xAI
+  'grok-2': { input: 2, output: 10 },
+  'grok-beta': { input: 5, output: 15 },
 
   // Default for unknown models
   'default': { input: 1, output: 2 },
