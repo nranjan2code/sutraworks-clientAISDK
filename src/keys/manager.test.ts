@@ -173,7 +173,7 @@ describe('KeyManager', () => {
     it('should handle overwriting keys correctly', async () => {
       await manager.setKey('openai', 'sk-initial-key-12345');
       await manager.setKey('openai', 'sk-updated-key-12345');
-      
+
       const key = await manager.getKey('openai');
       expect(key).toBe('sk-updated-key-12345');
     });
@@ -211,4 +211,185 @@ describe('KeyManager', () => {
       expect(isValid).toBe(false);
     });
   });
+
+  describe('setKeys (batch)', () => {
+    it('should set multiple keys at once', async () => {
+      await manager.setKeys({
+        openai: 'sk-openai-key-12345',
+        anthropic: 'sk-anthropic-key-12345',
+        google: 'google-api-key-12345',
+      });
+
+      expect(await manager.hasKey('openai')).toBe(true);
+      expect(await manager.hasKey('anthropic')).toBe(true);
+      expect(await manager.hasKey('google')).toBe(true);
+    });
+
+    it('should skip null or undefined keys', async () => {
+      await manager.setKeys({
+        openai: 'sk-openai-key-12345',
+        anthropic: null as unknown as string,
+        google: undefined as unknown as string,
+      });
+
+      expect(await manager.hasKey('openai')).toBe(true);
+      expect(await manager.hasKey('anthropic')).toBe(false);
+      expect(await manager.hasKey('google')).toBe(false);
+    });
+
+    it('should handle empty object', async () => {
+      await expect(manager.setKeys({})).resolves.not.toThrow();
+    });
+  });
+
+  describe('getKeyMeta', () => {
+    it('should return metadata for stored key', async () => {
+      await manager.setKey('openai', 'sk-test-key-12345');
+      const meta = await manager.getKeyMeta('openai');
+
+      expect(meta).not.toBeNull();
+      expect(meta?.provider).toBe('openai');
+      expect(meta?.createdAt).toBeDefined();
+      expect(typeof meta?.createdAt).toBe('number');
+    });
+
+    it('should return null for non-existent key', async () => {
+      const meta = await manager.getKeyMeta('openai');
+      expect(meta).toBeNull();
+    });
+  });
+
+  describe('auto-clear timer', () => {
+    it('should auto-clear key after timeout', async () => {
+      vi.useFakeTimers();
+
+      const timedManager = new KeyManager({
+        type: 'memory',
+        autoClearAfter: 1000, // 1 second
+      }, events);
+
+      await timedManager.setKey('openai', 'sk-test-key-12345');
+      expect(await timedManager.hasKey('openai')).toBe(true);
+
+      // Advance time past auto-clear
+      vi.advanceTimersByTime(1100);
+
+      // Allow async operations to complete
+      await vi.runAllTimersAsync();
+
+      expect(await timedManager.hasKey('openai')).toBe(false);
+
+      await timedManager.destroy();
+      vi.useRealTimers();
+    });
+
+    it('should reset timer when key is updated', async () => {
+      vi.useFakeTimers();
+
+      const timedManager = new KeyManager({
+        type: 'memory',
+        autoClearAfter: 1000,
+      }, events);
+
+      await timedManager.setKey('openai', 'sk-test-key-12345');
+
+      // Advance time partially
+      vi.advanceTimersByTime(500);
+
+      // Update the key (should reset timer)
+      await timedManager.setKey('openai', 'sk-new-key-123456');
+
+      // Advance time past original timeout but before new timeout
+      vi.advanceTimersByTime(600);
+
+      expect(await timedManager.hasKey('openai')).toBe(true);
+
+      // Advance past new timeout
+      vi.advanceTimersByTime(500);
+      await vi.runAllTimersAsync();
+
+      expect(await timedManager.hasKey('openai')).toBe(false);
+
+      await timedManager.destroy();
+      vi.useRealTimers();
+    });
+
+    it('should clear timer when key is manually removed', async () => {
+      vi.useFakeTimers();
+
+      const timedManager = new KeyManager({
+        type: 'memory',
+        autoClearAfter: 1000,
+      }, events);
+
+      await timedManager.setKey('openai', 'sk-test-key-12345');
+      await timedManager.removeKey('openai');
+
+      // Advance time past auto-clear (should not emit event since already removed)
+      vi.advanceTimersByTime(1100);
+      await vi.runAllTimersAsync();
+
+      // Just verify no errors occurred
+      expect(await timedManager.hasKey('openai')).toBe(false);
+
+      await timedManager.destroy();
+      vi.useRealTimers();
+    });
+  });
+
+  describe('updateStorage', () => {
+    it('should migrate keys to new storage type', async () => {
+      await manager.setKey('openai', 'sk-openai-key-12345');
+      await manager.setKey('anthropic', 'sk-anthropic-key-12345');
+
+      // Update to encrypted memory storage
+      await manager.updateStorage({
+        type: 'memory',
+        encrypt: true,
+      });
+
+      // Keys should still be accessible
+      expect(await manager.hasKey('openai')).toBe(true);
+      expect(await manager.hasKey('anthropic')).toBe(true);
+
+      // Verify keys are correct
+      const openaiKey = await manager.getKey('openai');
+      expect(openaiKey).toBe('sk-openai-key-12345');
+    });
+
+    it('should handle update with no existing keys', async () => {
+      await manager.updateStorage({
+        type: 'memory',
+        encrypt: true,
+      });
+
+      // Should not throw and should accept new keys
+      await manager.setKey('openai', 'sk-test-key-12345');
+      expect(await manager.hasKey('openai')).toBe(true);
+    });
+  });
+
+  describe('events', () => {
+    it('should emit key:set event when key is stored', async () => {
+      const listener = vi.fn();
+      events.on('key:set', listener);
+
+      await manager.setKey('openai', 'sk-test-key-12345');
+
+      expect(listener).toHaveBeenCalled();
+      expect(listener.mock.calls[0][0].provider).toBe('openai');
+    });
+
+    it('should emit key:remove event when key is removed', async () => {
+      const listener = vi.fn();
+      events.on('key:remove', listener);
+
+      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.removeKey('openai');
+
+      expect(listener).toHaveBeenCalled();
+      expect(listener.mock.calls[0][0].provider).toBe('openai');
+    });
+  });
 });
+

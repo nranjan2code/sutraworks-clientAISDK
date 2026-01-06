@@ -1,9 +1,10 @@
 <p align="center">
+  <a href="https://github.com/sutraworks/client-ai-sdk/actions/workflows/ci.yml"><img src="https://github.com/sutraworks/client-ai-sdk/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version 2.0.0" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License" />
-  <img src="https://img.shields.io/badge/tests-482%20passing-brightgreen.svg" alt="Tests Passing" />
-  <img src="https://img.shields.io/badge/coverage-80%25-brightgreen.svg" alt="Coverage" />
+  <img src="https://img.shields.io/badge/tests-516%20passing-brightgreen.svg" alt="Tests Passing" />
+  <img src="https://img.shields.io/badge/coverage-81%25-brightgreen.svg" alt="Coverage" />
   <img src="https://img.shields.io/badge/zero-dependencies-orange.svg" alt="Zero Dependencies" />
 </p>
 

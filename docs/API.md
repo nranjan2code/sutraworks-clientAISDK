@@ -11,6 +11,9 @@ Complete API documentation for Sutraworks Client AI SDK v2.0.
 - [Streaming](#streaming)
 - [Batch Processing](#batch-processing)
 - [Embeddings](#embeddings)
+- [Provider Management](#provider-management)
+- [Utilities](#utilities)
+- [Caching](#caching)
 - [Middleware](#middleware)
 - [Prompt Templates](#prompt-templates)
 - [Error Handling](#error-handling)
@@ -149,6 +152,33 @@ const fingerprint = await ai.getKeyFingerprint('openai');
 - `provider`: `ProviderName` - Provider identifier
 
 **Returns:** `Promise<string | null>`
+
+### `listStoredKeys()`
+
+List all providers that have stored API keys.
+
+```typescript
+const providers = await ai.listStoredKeys();
+// ['openai', 'anthropic', 'google']
+```
+
+**Returns:** `Promise<ProviderName[]>`
+
+### `updateKeyStorage(options)`
+
+Update key storage configuration at runtime.
+
+```typescript
+await ai.updateKeyStorage({
+  encrypt: true,
+  autoClearAfter: 7200000 // 2 hours
+});
+```
+
+**Parameters:**
+- `options`: `Partial<KeyStorageOptions>` - Storage options to update
+
+**Returns:** `Promise<void>`
 
 ---
 
@@ -451,6 +481,179 @@ interface EmbeddingResponse {
 
 ---
 
+## Provider Management
+
+### `getProviders()`
+
+Get a list of all available providers.
+
+```typescript
+const providers = ai.getProviders();
+// ['openai', 'anthropic', 'google', 'ollama', ...]
+```
+
+**Returns:** `ProviderName[]`
+
+### `supportsFeature(provider, feature)`
+
+Check if a provider supports a specific feature.
+
+```typescript
+const hasVision = ai.supportsFeature('openai', 'vision'); // true
+const hasEmbeddings = ai.supportsFeature('groq', 'embeddings'); // false
+```
+
+**Parameters:**
+- `provider`: `ProviderName` - Provider to check
+- `feature`: `'streaming' | 'embeddings' | 'vision' | 'tools'` - Feature to check
+
+**Returns:** `boolean`
+
+### `configureProvider(provider, config)`
+
+Update provider configuration at runtime.
+
+```typescript
+ai.configureProvider('ollama', {
+  baseUrl: 'http://192.168.1.100:11434/api',
+  timeout: 60000
+});
+```
+
+**Parameters:**
+- `provider`: `ProviderName` - Provider to configure
+- `config`: Provider configuration options
+
+**Returns:** `void`
+
+### `listModels(provider)`
+
+List available models from a provider.
+
+```typescript
+const models = await ai.listModels('openai');
+// [{ id: 'gpt-4-turbo', ... }, ...]
+```
+
+**Parameters:**
+- `provider`: `ProviderName` - Provider to list models from
+
+**Returns:** `Promise<ModelInfo[]>`
+
+### `listAllModels()`
+
+List models from all configured providers.
+
+```typescript
+const allModels = await ai.listAllModels();
+```
+
+**Returns:** `Promise<ModelInfo[]>`
+
+---
+
+## Utilities
+
+### `estimateTokens(messages)`
+
+Estimate token count for a message array.
+
+```typescript
+const tokens = ai.estimateTokens([
+  { role: 'user', content: 'Hello, how are you?' }
+]);
+// 6
+```
+
+**Parameters:**
+- `messages`: `Message[]` - Array of messages
+
+**Returns:** `number`
+
+### `estimateCost(inputTokens, outputTokens, model)`
+
+Estimate cost for a request.
+
+```typescript
+const cost = ai.estimateCost(1000, 500, 'gpt-4-turbo');
+// { input: 0.01, output: 0.015, total: 0.025 }
+```
+
+**Parameters:**
+- `inputTokens`: `number` - Input token count
+- `outputTokens`: `number` - Output token count
+- `model`: `string` - Model identifier
+
+**Returns:** `{ input: number; output: number; total: number }`
+
+### `resetUsageStats()`
+
+Reset all usage statistics.
+
+```typescript
+ai.resetUsageStats();
+```
+
+**Returns:** `void`
+
+### `setDebug(enabled)`
+
+Enable or disable debug mode.
+
+```typescript
+ai.setDebug(true); // Enable debug logging
+```
+
+**Parameters:**
+- `enabled`: `boolean` - Whether to enable debug mode
+
+**Returns:** `void`
+
+---
+
+## Caching
+
+### `setCache(enabled, options?)`
+
+Enable or disable response caching.
+
+```typescript
+ai.setCache(true, {
+  ttl: 3600000,      // 1 hour
+  maxEntries: 1000,
+  maxSize: 50000000  // 50 MB
+});
+```
+
+**Parameters:**
+- `enabled`: `boolean` - Enable/disable caching
+- `options`: `{ ttl?: number; maxEntries?: number; maxSize?: number }` - Cache options
+
+**Returns:** `void`
+
+### `clearCache()`
+
+Clear the response cache.
+
+```typescript
+ai.clearCache();
+```
+
+**Returns:** `void`
+
+### `getCacheStats()`
+
+Get cache statistics.
+
+```typescript
+const stats = ai.getCacheStats();
+// { size: 42, totalHits: 150, avgHits: 3.5, memoryUsage: 1024000 }
+```
+
+**Returns:** `{ size: number; totalHits: number; avgHits: number; memoryUsage: number } | null`
+
+---
+
 ## Middleware
 
 ### `use(middleware)`
@@ -583,6 +786,15 @@ List all middleware names.
 ```typescript
 const names = ai.listMiddleware();
 // ['validation', 'logger', 'retry']
+```
+
+### `toggleMiddleware(name, enabled)`
+
+Enable or disable middleware at runtime.
+
+```typescript
+ai.toggleMiddleware('logging', false); // Disable logging
+ai.toggleMiddleware('logging', true);  // Re-enable logging
 ```
 
 ---
@@ -810,6 +1022,42 @@ ai.on('retry:attempt', (event) => {
   console.log(`Retry attempt ${event.retryCount}`);
 });
 ```
+
+### `onAll(listener)`
+
+Subscribe to all SDK events.
+
+```typescript
+const unsubscribe = ai.onAll((event) => {
+  console.log(`Event: ${event.type}`, event);
+});
+
+// Later, to unsubscribe:
+unsubscribe();
+```
+
+**Parameters:**
+- `listener`: `SutraEventListener` - Event listener function
+
+**Returns:** `() => void` - Unsubscribe function
+
+### `off(type, listener)`
+
+Unsubscribe from SDK events.
+
+```typescript
+const listener = (event) => console.log(event);
+ai.on('request:start', listener);
+
+// Later, to unsubscribe:
+ai.off('request:start', listener);
+```
+
+**Parameters:**
+- `type`: `SutraEventType` - Event type
+- `listener`: `SutraEventListener` - The listener to remove
+
+**Returns:** `void`
 
 ### Event Types
 

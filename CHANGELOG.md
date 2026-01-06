@@ -30,7 +30,7 @@ This release represents a complete overhaul of the SDK with enterprise-grade fea
 - xAI (Grok) support
 
 #### Testing
-- **482 tests** across 16 test files
+- **516 tests** across 16 test files
 - **80.59% code coverage** (up from 44%)
 - Comprehensive provider test suites
 - Middleware and validation test coverage

@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sutra AI SDK - Interactive Demo</title>
+  <meta name="description"
+    content="Interactive demo showcasing Sutraworks Client AI SDK features with BYOK architecture">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-card-hover: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-cyan: #00d4ff;
+      --accent-purple: #a855f7;
+      --accent-green: #22c55e;
+      --accent-orange: #f97316;
+      --accent-pink: #ec4899;
+      --gradient-1: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%);
+      --gradient-2: linear-gradient(135deg, #22c55e 0%, #00d4ff 100%);
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Animated Background */
+    .bg-gradient {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(34, 197, 94, 0.03) 0%, transparent 70%);
+      z-index: -1;
+      animation: pulse 15s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.7;
+      }
+    }
+
+    /* Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 0;
+      margin-bottom: 2rem;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+    }
+
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo-icon svg {
+      width: 36px;
+      height: 36px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: var(--gradient-1);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    .badges {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.875rem;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      backdrop-filter: blur(8px);
+    }
+
+    .badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .badge.cyan {
+      color: var(--accent-cyan);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .badge.green {
+      color: var(--accent-green);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .badge.purple {
+      color: var(--accent-purple);
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      padding: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: transparent;
+      border: none;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tab:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-tab.active {
+      background: var(--gradient-1);
+      color: white;
+    }
+
+    .nav-tab svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Panel Sections */
+    .panel {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-icon.cyan {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    .card-icon.purple {
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--accent-purple);
+    }
+
+    .card-icon.green {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+    }
+
+    .card-icon.orange {
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--accent-orange);
+    }
+
+    .card-icon.pink {
+      background: rgba(236, 72, 153, 0.15);
+      color: var(--accent-pink);
+    }
+
+    .card-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Chat Interface */
+    .chat-container {
+      height: 400px;
+      overflow-y: auto;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .chat-message {
+      margin-bottom: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .chat-message.user {
+      text-align: right;
+    }
+
+    .chat-bubble {
+      display: inline-block;
+      max-width: 80%;
+      padding: 0.875rem 1.25rem;
+      border-radius: 16px;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    .chat-message.user .chat-bubble {
+      background: var(--gradient-1);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-message.assistant .chat-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border-radius: 16px;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.3;
+      }
+
+      30% {
+        transform: translateY(-6px);
+        opacity: 1;
+      }
+    }
+
+    /* Code Block */
+    .code-block {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      color: var(--text-secondary);
+    }
+
+    .code-block .keyword {
+      color: var(--accent-purple);
+    }
+
+    .code-block .string {
+      color: var(--accent-green);
+    }
+
+    .code-block .comment {
+      color: var(--text-muted);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 1.25rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: var(--gradient-1);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Feature Cards */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .feature-card {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Provider Select */
+    .provider-select {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .provider-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .provider-option:hover {
+      border-color: var(--border-hover);
+    }
+
+    .provider-option.selected {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .provider-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    /* Status Indicator */
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+
+    .status-dot.online {
+      background: var(--accent-green);
+    }
+
+    .status-dot.offline {
+      background: #ef4444;
+      animation: none;
+    }
+
+    .status-dot.loading {
+      background: var(--accent-orange);
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Logs */
+    .log-container {
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+    }
+
+    .log-entry {
+      margin-bottom: 0.25rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .log-time {
+      color: var(--text-muted);
+    }
+
+    .log-type {
+      font-weight: 600;
+      min-width: 60px;
+    }
+
+    .log-type.info {
+      color: var(--accent-cyan);
+    }
+
+    .log-type.success {
+      color: var(--accent-green);
+    }
+
+    .log-type.error {
+      color: #ef4444;
+    }
+
+    .log-type.warn {
+      color: var(--accent-orange);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 3rem 0;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-hover);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .nav-tab span {
+        display: none;
+      }
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+      width: 100%;
+      max-height: 200px;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Feature Showcase */
+    .feature-showcase {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .feature-showcase {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .feature-item {
+      text-align: center;
+      padding: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .feature-item:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.1);
+    }
+
+    .feature-item img {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+      object-fit: cover;
+    }
+
+    .feature-item h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .feature-item p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-gradient"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <img src="images/hero_banner.png" alt="Sutra AI SDK - Neural Network Visualization" loading="lazy">
+      </div>
+
+      <div class="logo-section">
+        <div class="logo-icon">
+          <img src="images/sdk_logo.png" alt="Sutra AI Logo">
+        </div>
+        <h1>Sutra AI SDK</h1>
+      </div>
+      <p class="tagline">Universal Client-Side AI with BYOK Architecture</p>
+      <div class="badges">
+        <span class="badge cyan"><i data-lucide="shield-check"></i> BYOK Secure</span>
+        <span class="badge green"><i data-lucide="zap"></i> 12+ Providers</span>
+        <span class="badge purple"><i data-lucide="package"></i> Zero Dependencies</span>
+      </div>
+    </header>
+
+    <!-- Feature Showcase with Images -->
+    <div class="feature-showcase">
+      <div class="feature-item">
+        <img src="images/feature_chat.png" alt="AI Chat">
+        <h4>Chat Completions</h4>
+        <p>Intelligent conversations</p>
+      </div>
+      <div class="feature-item">
+        <img src="images/feature_streaming.png" alt="Real-time Streaming">
+        <h4>Real-time Streaming</h4>
+        <p>Token-by-token delivery</p>
+      </div>
+      <div class="feature-item">
+        <img src="images/feature_embeddings.png" alt="Vector Embeddings">
+        <h4>Vector Embeddings</h4>
+        <p>Semantic search ready</p>
+      </div>
+      <div class="feature-item">
+        <img src="images/feature_security.png" alt="BYOK Security">
+        <h4>BYOK Security</h4>
+        <p>Your keys, your control</p>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div class="status">
+          <span class="status-dot online" id="statusDot"></span>
+          <span id="statusText">Ollama Connected</span>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+            <select id="modelSelect">
+              <option value="granite3.3:8b">granite3.3:8b</option>
+              <option value="nomic-embed-text-v2-moe:latest">nomic-embed (embeddings)</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="refreshModels()">
+            <i data-lucide="refresh-cw"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="showPanel('chat')">
+        <i data-lucide="message-circle"></i>
+        <span>Chat</span>
+      </button>
+      <button class="nav-tab" onclick="showPanel('streaming')">
+        <i data-lucide="radio"></i>
+        <span>Streaming</span>
+      </button>
+      <button class="nav-tab" onclick="showPanel('embeddings')">
+        <i data-lucide="box"></i>
+        <span>Embeddings</span>
+      </button>
+      <button class="nav-tab" onclick="showPanel('templates')">
+        <i data-lucide="file-code"></i>
+        <span>Templates</span>
+      </button>
+      <button class="nav-tab" onclick="showPanel('batch')">
+        <i data-lucide="layers"></i>
+        <span>Batch</span>
+      </button>
+      <button class="nav-tab" onclick="showPanel('stats')">
+        <i data-lucide="bar-chart-2"></i>
+        <span>Stats</span>
+      </button>
+    </nav>
+
+    <!-- Chat Panel -->
+    <div id="chatPanel" class="panel active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan"><i data-lucide="message-circle"></i></div>
+            <div>
+              <div class="card-title">Chat Completion</div>
+              <div class="card-subtitle">Send messages to AI models</div>
+            </div>
+          </div>
+
+          <div class="chat-container" id="chatContainer">
+            <div class="chat-message assistant">
+              <div class="chat-role">Assistant</div>
+              <div class="chat-bubble">Hello! I'm ready to assist you. Try asking me anything!</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="chatInput" placeholder="Type your message..."
+              onkeypress="if(event.key==='Enter') sendChat()">
+            <button class="btn btn-primary" onclick="sendChat()" id="sendBtn">
+              <i data-lucide="send"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon purple"><i data-lucide="settings-2"></i></div>
+            <div>
+              <div class="card-title">Configuration</div>
+              <div class="card-subtitle">Adjust chat parameters</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>System Prompt</label>
+            <textarea id="systemPrompt" rows="3">You are a helpful AI assistant. Be concise and friendly.</textarea>
+          </div>
+
+          <div class="grid-2" style="gap: 1rem;">
+            <div class="form-group">
+              <label>Temperature: <span id="tempValue">0.7</span></label>
+              <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7"
+                oninput="document.getElementById('tempValue').textContent = this.value">
+            </div>
+            <div class="form-group">
+              <label>Max Tokens</label>
+              <input type="number" id="maxTokens" value="500" min="1" max="4000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Request Logs</label>
+            <div class="log-container" id="chatLogs">
+              <div class="log-entry"><span class="log-time">--:--:--</span> <span class="log-type info">INFO</span>
+                Ready to chat</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Streaming Panel -->
+    <div id="streamingPanel" class="panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon green"><i data-lucide="radio"></i></div>
+            <div>
+              <div class="card-title">Real-time Streaming</div>
+              <div class="card-subtitle">Watch tokens arrive in real-time</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Prompt</label>
+            <textarea id="streamPrompt" rows="3">Write a short poem about artificial intelligence.</textarea>
+          </div>
+
+          <button class="btn btn-primary" onclick="startStreaming()" id="streamBtn">
+            <i data-lucide="play"></i>
+            Start Streaming
+          </button>
+
+          <div style="margin-top: 1rem;">
+            <label>Streaming Output</label>
+            <div class="code-block" id="streamOutput" style="min-height: 200px;">
+              <span class="comment">// Output will appear here token by token...</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div class="stat-card card" style="flex: 1; min-width: 100px;">
+              <div class="stat-value" id="streamTokens">0</div>
+              <div class="stat-label">Tokens</div>
+            </div>
+            <div class="stat-card card" style="flex: 1; min-width: 100px;">
+              <div class="stat-value" id="streamTime">0</div>
+              <div class="stat-label">ms</div>
+            </div>
+            <div class="stat-card card" style="flex: 1; min-width: 100px;">
+              <div class="stat-value" id="streamSpeed">0</div>
+              <div class="stat-label">tok/s</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan"><i data-lucide="info"></i></div>
+            <div>
+              <div class="card-title">About Streaming</div>
+              <div class="card-subtitle">How real-time AI responses work</div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <h3><i data-lucide="zap" style="width: 18px; height: 18px; color: var(--accent-cyan);"></i> Instant Feedback
+            </h3>
+            <p>Tokens arrive as they're generated, providing immediate visual feedback to users.</p>
+          </div>
+
+          <div class="feature-card">
+            <h3><i data-lucide="timer" style="width: 18px; height: 18px; color: var(--accent-green);"></i> Lower Latency
+            </h3>
+            <p>First token arrives quickly - no waiting for the full response.</p>
+          </div>
+
+          <div class="feature-card">
+            <h3><i data-lucide="x-circle" style="width: 18px; height: 18px; color: var(--accent-orange);"></i>
+              Cancellable</h3>
+            <p>User can stop generation at any time with AbortController.</p>
+          </div>
+
+          <div class="code-block" style="margin-top: 1rem;">
+            <span class="keyword">const</span> stream = ai.<span class="string">chatStream</span>({
+            provider: <span class="string">'ollama'</span>,
+            model: <span class="string">'granite3.3:8b'</span>,
+            messages: [{ role: <span class="string">'user'</span>, content: prompt }]
+            });
+
+            <span class="keyword">for await</span> (<span class="keyword">const</span> chunk <span
+              class="keyword">of</span> stream) {
+            <span class="comment">// Process each token as it arrives</span>
+            output += chunk.choices[0]?.delta?.content;
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Embeddings Panel -->
+    <div id="embeddingsPanel" class="panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon purple"><i data-lucide="box"></i></div>
+            <div>
+              <div class="card-title">Text Embeddings</div>
+              <div class="card-subtitle">Generate vector representations</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Text to Embed</label>
+            <textarea id="embedText" rows="3">The quick brown fox jumps over the lazy dog.</textarea>
+          </div>
+
+          <button class="btn btn-primary" onclick="generateEmbedding()">
+            <i data-lucide="sparkles"></i>
+            Generate Embedding
+          </button>
+
+          <div style="margin-top: 1rem;">
+            <label>Embedding Vector (first 10 dimensions)</label>
+            <div class="code-block" id="embedOutput" style="min-height: 100px;">
+              <span class="comment">// Click generate to see the embedding vector...</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <label>Vector Properties</label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <div class="badge">Dimensions: <span id="embedDims">-</span></div>
+              <div class="badge">Model: nomic-embed</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon green"><i data-lucide="git-compare"></i></div>
+            <div>
+              <div class="card-title">Similarity Search</div>
+              <div class="card-subtitle">Compare text similarity</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Text 1</label>
+            <input type="text" id="simText1" value="AI is transforming technology">
+          </div>
+
+          <div class="form-group">
+            <label>Text 2</label>
+            <input type="text" id="simText2" value="Machine learning changes the world">
+          </div>
+
+          <button class="btn btn-primary" onclick="compareSimilarity()">
+            <i data-lucide="scale"></i>
+            Compare Similarity
+          </button>
+
+          <div style="margin-top: 1.5rem; text-align: center;">
+            <div class="stat-value" id="similarityScore">-</div>
+            <div class="stat-label">Cosine Similarity</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Templates Panel -->
+    <div id="templatesPanel" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon orange"><i data-lucide="file-code"></i></div>
+          <div>
+            <div class="card-title">Prompt Templates</div>
+            <div class="card-subtitle">Reusable prompts with variable substitution</div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 1.5rem;">
+          <button class="btn btn-secondary" onclick="loadTemplate('summary')">
+            <i data-lucide="file-text"></i> Summarizer
+          </button>
+          <button class="btn btn-secondary" onclick="loadTemplate('code')">
+            <i data-lucide="code-2"></i> Code Review
+          </button>
+          <button class="btn btn-secondary" onclick="loadTemplate('translate')">
+            <i data-lucide="languages"></i> Translator
+          </button>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="form-group">
+              <label>Template Name</label>
+              <input type="text" id="templateName" value="summarizer">
+            </div>
+
+            <div class="form-group">
+              <label>System Prompt</label>
+              <textarea id="templateSystem"
+                rows="2">You are a concise summarizer. Respond with bullet points.</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>User Prompt (use {{variable}} for placeholders)</label>
+              <textarea id="templateUser" rows="3">Summarize the following text in {{style}} style:
+
+{{text}}</textarea>
+            </div>
+          </div>
+
+          <div>
+            <div class="form-group">
+              <label>Variables</label>
+              <div id="templateVars">
+                <div class="form-group">
+                  <label>style</label>
+                  <input type="text" value="brief" class="template-var" data-var="style">
+                </div>
+                <div class="form-group">
+                  <label>text</label>
+                  <textarea rows="3" class="template-var"
+                    data-var="text">Artificial intelligence has made remarkable progress in recent years, with large language models demonstrating capabilities previously thought impossible.</textarea>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="executeTemplate()">
+              <i data-lucide="play"></i>
+              Execute Template
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <label>Template Result</label>
+          <div class="code-block" id="templateOutput" style="min-height: 100px;">
+            <span class="comment">// Template output will appear here...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Panel -->
+    <div id="batchPanel" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon pink"><i data-lucide="layers"></i></div>
+          <div>
+            <div class="card-title">Batch Processing</div>
+            <div class="card-subtitle">Process multiple requests in parallel</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Prompts (one per line)</label>
+          <textarea id="batchPrompts" rows="5">What is machine learning?
+Explain neural networks briefly.
+What is natural language processing?
+Define computer vision.
+What is reinforcement learning?</textarea>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label>Concurrency</label>
+            <input type="number" id="batchConcurrency" value="2" min="1" max="10">
+          </div>
+          <div class="form-group">
+            <label>Max Tokens per Request</label>
+            <input type="number" id="batchMaxTokens" value="100" min="50" max="500">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="runBatch()" id="batchBtn">
+          <i data-lucide="play"></i>
+          Run Batch Processing
+        </button>
+
+        <div style="margin-top: 1.5rem;">
+          <label>Progress</label>
+          <div
+            style="background: var(--bg-card); border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 1rem;">
+            <div id="batchProgress"
+              style="height: 100%; background: var(--gradient-1); width: 0%; transition: width 0.3s ease;"></div>
+          </div>
+          <div id="batchStatus" style="font-size: 0.875rem; color: var(--text-secondary);">Ready to process</div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label>Results</label>
+          <div class="log-container" id="batchResults" style="max-height: 300px;">
+            <span class="log-type info">Batch results will appear here...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div id="statsPanel" class="panel">
+      <div class="stats-grid">
+        <div class="stat-card card">
+          <div class="stat-value" id="statRequests">0</div>
+          <div class="stat-label">Total Requests</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-value" id="statTokensIn">0</div>
+          <div class="stat-label">Input Tokens</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-value" id="statTokensOut">0</div>
+          <div class="stat-label">Output Tokens</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-value" id="statCost">$0.00</div>
+          <div class="stat-label">Est. Cost</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan"><i data-lucide="activity"></i></div>
+            <div>
+              <div class="card-title">Usage by Model</div>
+              <div class="card-subtitle">Token breakdown per model</div>
+            </div>
+          </div>
+          <div id="modelStats" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;">
+            <p style="color: var(--text-muted);">No usage data yet. Start chatting to see stats!</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon green"><i data-lucide="clock"></i></div>
+            <div>
+              <div class="card-title">Event Log</div>
+              <div class="card-subtitle">SDK events in real-time</div>
+            </div>
+          </div>
+          <div class="log-container" id="eventLog">
+            <div class="log-entry"><span class="log-time">--:--:--</span> <span class="log-type info">SDK</span> Ready
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <button class="btn btn-secondary" onclick="resetStats()">
+          <i data-lucide="refresh-cw"></i>
+          Reset Statistics
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        Built with <a href="https://github.com/sutraworks/client-ai-sdk">Sutra AI SDK</a> v2.0.0 •
+        Your keys stay on your device 🔐
+      </p>
+    </footer>
+  </div>
+
+  <script type="module">
+    // =========================================
+    // Sutra AI SDK - Demo Implementation
+    // =========================================
+
+    const OLLAMA_BASE_URL = 'http://localhost:11434/api';
+
+    // Simple SDK wrapper for demo (uses Ollama directly)
+    class SutraAIDemo {
+      constructor() {
+        this.stats = {
+          requests: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          cost: 0
+        };
+        this.listeners = {};
+      }
+
+      async chat(options) {
+        const startTime = Date.now();
+        this.emit('request:start', { model: options.model });
+
+        const response = await fetch(`${OLLAMA_BASE_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: options.model,
+            messages: options.messages,
+            stream: false,
+            options: {
+              temperature: options.temperature || 0.7,
+              num_predict: options.max_tokens || 500
+            }
+          })
+        });
+
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+
+        const data = await response.json();
+        const duration = Date.now() - startTime;
+
+        this.stats.requests++;
+        this.stats.inputTokens += data.prompt_eval_count || 0;
+        this.stats.outputTokens += data.eval_count || 0;
+
+        this.emit('request:end', { model: options.model, duration });
+
+        return {
+          content: data.message?.content || '',
+          usage: {
+            prompt_tokens: data.prompt_eval_count || 0,
+            completion_tokens: data.eval_count || 0
+          }
+        };
+      }
+
+      async *chatStream(options) {
+        this.emit('stream:start', { model: options.model });
+
+        const response = await fetch(`${OLLAMA_BASE_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: options.model,
+            messages: options.messages,
+            stream: true,
+            options: {
+              temperature: options.temperature || 0.7,
+              num_predict: options.max_tokens || 500
+            }
+          })
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let tokenCount = 0;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(l => l.trim());
+
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line);
+              if (data.message?.content) {
+                tokenCount++;
+                yield { content: data.message.content, done: data.done };
+              }
+            } catch { }
+          }
+        }
+
+        this.stats.requests++;
+        this.stats.outputTokens += tokenCount;
+        this.emit('stream:end', { tokens: tokenCount });
+      }
+
+      async embed(options) {
+        const response = await fetch(`${OLLAMA_BASE_URL}/embeddings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: options.model,
+            prompt: options.input
+          })
+        });
+
+        if (!response.ok) throw new Error(`Embedding failed: ${response.status}`);
+
+        const data = await response.json();
+        return {
+          embedding: data.embedding,
+          dimensions: data.embedding?.length || 0
+        };
+      }
+
+      async listModels() {
+        const response = await fetch(`${OLLAMA_BASE_URL}/tags`);
+        const data = await response.json();
+        return data.models || [];
+      }
+
+      getStats() {
+        return { ...this.stats };
+      }
+
+      resetStats() {
+        this.stats = { requests: 0, inputTokens: 0, outputTokens: 0, cost: 0 };
+      }
+
+      on(event, callback) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(callback);
+      }
+
+      emit(event, data) {
+        (this.listeners[event] || []).forEach(cb => cb(data));
+      }
+    }
+
+    // Initialize
+    const ai = new SutraAIDemo();
+    window.ai = ai;
+
+    // Event listeners
+    ai.on('request:start', (e) => logEvent('INFO', `Request started: ${e.model}`));
+    ai.on('request:end', (e) => logEvent('SUCCESS', `Completed in ${e.duration}ms`));
+    ai.on('stream:start', () => logEvent('INFO', 'Stream started'));
+    ai.on('stream:end', (e) => logEvent('SUCCESS', `Stream ended: ${e.tokens} tokens`));
+
+    // =========================================
+    // UI Functions
+    // =========================================
+
+    // Navigation
+    window.showPanel = function (panelName) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+      document.getElementById(`${panelName}Panel`).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (panelName === 'stats') updateStats();
+    }
+
+    // Chat
+    window.sendChat = async function () {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      const container = document.getElementById('chatContainer');
+
+      // Add user message
+      container.innerHTML += `
+        <div class="chat-message user">
+          <div class="chat-role">You</div>
+          <div class="chat-bubble">${escapeHtml(message)}</div>
+        </div>
+      `;
+
+      // Add typing indicator
+      container.innerHTML += `
+        <div class="chat-message assistant" id="typing">
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+      `;
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const systemPrompt = document.getElementById('systemPrompt').value;
+        const temperature = parseFloat(document.getElementById('temperature').value);
+        const maxTokens = parseInt(document.getElementById('maxTokens').value);
+        const model = document.getElementById('modelSelect').value;
+
+        logChat('INFO', `Sending to ${model}`);
+
+        const response = await ai.chat({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message }
+          ],
+          temperature,
+          max_tokens: maxTokens
+        });
+
+        document.getElementById('typing').remove();
+
+        container.innerHTML += `
+          <div class="chat-message assistant">
+            <div class="chat-role">Assistant</div>
+            <div class="chat-bubble">${escapeHtml(response.content)}</div>
+          </div>
+        `;
+
+        logChat('SUCCESS', `Received ${response.usage.completion_tokens} tokens`);
+      } catch (error) {
+        document.getElementById('typing')?.remove();
+        container.innerHTML += `
+          <div class="chat-message assistant">
+            <div class="chat-bubble" style="border-color: #ef4444;">Error: ${escapeHtml(error.message)}</div>
+          </div>
+        `;
+        logChat('ERROR', error.message);
+      }
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Streaming
+    window.startStreaming = async function () {
+      const prompt = document.getElementById('streamPrompt').value;
+      const output = document.getElementById('streamOutput');
+      const model = document.getElementById('modelSelect').value;
+
+      output.textContent = '';
+      document.getElementById('streamTokens').textContent = '0';
+      document.getElementById('streamTime').textContent = '0';
+      document.getElementById('streamSpeed').textContent = '0';
+
+      const startTime = Date.now();
+      let tokenCount = 0;
+
+      try {
+        document.getElementById('streamBtn').disabled = true;
+
+        for await (const chunk of ai.chatStream({
+          model,
+          messages: [{ role: 'user', content: prompt }]
+        })) {
+          output.textContent += chunk.content;
+          tokenCount++;
+
+          const elapsed = Date.now() - startTime;
+          document.getElementById('streamTokens').textContent = tokenCount;
+          document.getElementById('streamTime').textContent = elapsed;
+          document.getElementById('streamSpeed').textContent = (tokenCount / (elapsed / 1000)).toFixed(1);
+        }
+      } catch (error) {
+        output.textContent += `\n\nError: ${error.message}`;
+      } finally {
+        document.getElementById('streamBtn').disabled = false;
+      }
+    }
+
+    // Embeddings
+    window.generateEmbedding = async function () {
+      const text = document.getElementById('embedText').value;
+      const output = document.getElementById('embedOutput');
+
+      try {
+        const result = await ai.embed({
+          model: 'nomic-embed-text-v2-moe:latest',
+          input: text
+        });
+
+        const preview = result.embedding.slice(0, 10).map(n => n.toFixed(6)).join(', ');
+        output.textContent = `[${preview}, ...]\n\n// Total dimensions: ${result.dimensions}`;
+        document.getElementById('embedDims').textContent = result.dimensions;
+      } catch (error) {
+        output.textContent = `Error: ${error.message}`;
+      }
+    }
+
+    // Similarity
+    window.compareSimilarity = async function () {
+      const text1 = document.getElementById('simText1').value;
+      const text2 = document.getElementById('simText2').value;
+
+      try {
+        const [emb1, emb2] = await Promise.all([
+          ai.embed({ model: 'nomic-embed-text-v2-moe:latest', input: text1 }),
+          ai.embed({ model: 'nomic-embed-text-v2-moe:latest', input: text2 })
+        ]);
+
+        const similarity = cosineSimilarity(emb1.embedding, emb2.embedding);
+        document.getElementById('similarityScore').textContent = similarity.toFixed(4);
+      } catch (error) {
+        document.getElementById('similarityScore').textContent = 'Error';
+      }
+    }
+
+    function cosineSimilarity(a, b) {
+      let dot = 0, magA = 0, magB = 0;
+      for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        magA += a[i] * a[i];
+        magB += b[i] * b[i];
+      }
+      return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+    }
+
+    // Templates
+    window.loadTemplate = function (type) {
+      const templates = {
+        summary: {
+          name: 'summarizer',
+          system: 'You are a concise summarizer. Respond with bullet points.',
+          user: 'Summarize the following text in {{style}} style:\n\n{{text}}'
+        },
+        code: {
+          name: 'code-review',
+          system: 'You are an expert code reviewer. Be constructive and specific.',
+          user: 'Review this {{language}} code and suggest improvements:\n\n{{code}}'
+        },
+        translate: {
+          name: 'translator',
+          system: 'You are a professional translator. Preserve meaning and tone.',
+          user: 'Translate the following from {{source}} to {{target}}:\n\n{{text}}'
+        }
+      };
+
+      const t = templates[type];
+      document.getElementById('templateName').value = t.name;
+      document.getElementById('templateSystem').value = t.system;
+      document.getElementById('templateUser').value = t.user;
+    }
+
+    window.executeTemplate = async function () {
+      const system = document.getElementById('templateSystem').value;
+      let user = document.getElementById('templateUser').value;
+      const output = document.getElementById('templateOutput');
+      const model = document.getElementById('modelSelect').value;
+
+      // Replace variables
+      document.querySelectorAll('.template-var').forEach(el => {
+        const varName = el.dataset.var;
+        const value = el.value;
+        user = user.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), value);
+      });
+
+      output.innerHTML = '<span class="comment">// Executing template...</span>';
+
+      try {
+        const response = await ai.chat({
+          model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user }
+          ]
+        });
+
+        output.textContent = response.content;
+      } catch (error) {
+        output.innerHTML = `<span style="color: #ef4444;">Error: ${escapeHtml(error.message)}</span>`;
+      }
+    }
+
+    // Batch
+    window.runBatch = async function () {
+      const prompts = document.getElementById('batchPrompts').value.split('\n').filter(p => p.trim());
+      const concurrency = parseInt(document.getElementById('batchConcurrency').value);
+      const maxTokens = parseInt(document.getElementById('batchMaxTokens').value);
+      const model = document.getElementById('modelSelect').value;
+      const results = document.getElementById('batchResults');
+      const progress = document.getElementById('batchProgress');
+      const status = document.getElementById('batchStatus');
+
+      results.innerHTML = '';
+      progress.style.width = '0%';
+      status.textContent = `Processing 0/${prompts.length}...`;
+      document.getElementById('batchBtn').disabled = true;
+
+      let completed = 0;
+      const startTime = Date.now();
+
+      // Process in chunks
+      for (let i = 0; i < prompts.length; i += concurrency) {
+        const chunk = prompts.slice(i, i + concurrency);
+        const promises = chunk.map(async (prompt, idx) => {
+          const index = i + idx;
+          try {
+            const response = await ai.chat({
+              model,
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: maxTokens
+            });
+
+            return { index, prompt, result: response.content.slice(0, 100) + '...', success: true };
+          } catch (error) {
+            return { index, prompt, result: error.message, success: false };
+          }
+        });
+
+        const chunkResults = await Promise.all(promises);
+
+        for (const r of chunkResults) {
+          completed++;
+          progress.style.width = `${(completed / prompts.length) * 100}%`;
+          status.textContent = `Processing ${completed}/${prompts.length}...`;
+
+          results.innerHTML += `
+            <div class="log-entry">
+              <span class="log-type ${r.success ? 'success' : 'error'}">#${r.index + 1}</span>
+              <span>${escapeHtml(r.result)}</span>
+            </div>
+          `;
+          results.scrollTop = results.scrollHeight;
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      status.textContent = `Completed ${prompts.length} requests in ${duration}ms`;
+      document.getElementById('batchBtn').disabled = false;
+    }
+
+    // Stats
+    window.updateStats = function () {
+      const stats = ai.getStats();
+      document.getElementById('statRequests').textContent = stats.requests;
+      document.getElementById('statTokensIn').textContent = stats.inputTokens;
+      document.getElementById('statTokensOut').textContent = stats.outputTokens;
+      document.getElementById('statCost').textContent = '$0.00'; // Ollama is free!
+    }
+
+    window.resetStats = function () {
+      ai.resetStats();
+      updateStats();
+      document.getElementById('eventLog').innerHTML = '<div class="log-entry"><span class="log-time">' + getTime() + '</span> <span class="log-type info">SDK</span> Stats reset</div>';
+    }
+
+    // Models
+    window.refreshModels = async function () {
+      try {
+        const models = await ai.listModels();
+        const select = document.getElementById('modelSelect');
+        select.innerHTML = models.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+        logEvent('SUCCESS', `Found ${models.length} models`);
+      } catch (error) {
+        logEvent('ERROR', 'Failed to load models');
+      }
+    }
+
+    // Helpers
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function getTime() {
+      return new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+
+    function logEvent(type, message) {
+      const log = document.getElementById('eventLog');
+      log.innerHTML += `<div class="log-entry"><span class="log-time">${getTime()}</span> <span class="log-type ${type.toLowerCase()}">${type}</span> ${escapeHtml(message)}</div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function logChat(type, message) {
+      const log = document.getElementById('chatLogs');
+      log.innerHTML += `<div class="log-entry"><span class="log-time">${getTime()}</span> <span class="log-type ${type.toLowerCase()}">${type}</span> ${escapeHtml(message)}</div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Initialize icons
+    lucide.createIcons();
+
+    // Check Ollama connection
+    async function checkConnection() {
+      try {
+        await ai.listModels();
+        document.getElementById('statusDot').className = 'status-dot online';
+        document.getElementById('statusText').textContent = 'Ollama Connected';
+        await refreshModels();
+      } catch {
+        document.getElementById('statusDot').className = 'status-dot offline';
+        document.getElementById('statusText').textContent = 'Ollama Offline';
+      }
+    }
+
+    checkConnection();
+  </script>
+</body>
+
+</html>
