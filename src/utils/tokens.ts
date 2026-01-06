@@ -13,14 +13,14 @@ export function estimateTokens(text: string): number {
   // Simple heuristic: ~4 characters per token on average for English
   // This is a rough approximation; actual token counts vary by model
   const charCount = text.length;
-  
+
   // Count whitespace-separated words
   const wordCount = text.split(/\s+/).filter(Boolean).length;
-  
+
   // Average of character-based and word-based estimates
   const charBasedEstimate = Math.ceil(charCount / 4);
   const wordBasedEstimate = Math.ceil(wordCount * 1.3);
-  
+
   return Math.ceil((charBasedEstimate + wordBasedEstimate) / 2);
 }
 
@@ -66,6 +66,7 @@ export function estimateMessagesTokens(
  */
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   // OpenAI
+  'o1-pro': { input: 30, output: 120 },
   'gpt-4o': { input: 2.5, output: 10 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10, output: 30 },
@@ -75,6 +76,8 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   'o1-mini': { input: 3, output: 12 },
 
   // Anthropic
+  'claude-opus-4-5-20251101': { input: 15, output: 75 },
+  'claude-sonnet-4-5-20250915': { input: 3, output: 15 },
   'claude-sonnet-4-20250514': { input: 3, output: 15 }, // Claude Sonnet 4
   'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
   'claude-3-5-haiku-20241022': { input: 0.8, output: 4 },
@@ -82,6 +85,8 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   'claude-3-sonnet-20240229': { input: 3, output: 15 },
 
   // Google
+  'gemini-3-flash': { input: 0.05, output: 0.2 },
+  'gemini-3-pro': { input: 1.25, output: 5 },
   'gemini-2.0-flash': { input: 0.075, output: 0.3 },
   'gemini-2.0-flash-thinking': { input: 0.075, output: 0.3 },
   'gemini-1.5-pro': { input: 1.25, output: 5 },
@@ -92,6 +97,8 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   'mistral-large-latest': { input: 2, output: 6 },
   'mistral-medium-latest': { input: 2.7, output: 8.1 },
   'mistral-small-latest': { input: 0.2, output: 0.6 },
+  'mistral-large-3': { input: 2, output: 6 },
+  'ministral-3': { input: 0.1, output: 0.3 },
   'codestral-latest': { input: 0.2, output: 0.6 },
 
   // Groq
@@ -104,10 +111,12 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   'command-r': { input: 0.15, output: 0.6 },
 
   // DeepSeek
+  'deepseek-v3-2': { input: 0.14, output: 0.28 },
   'deepseek-chat': { input: 0.14, output: 0.28 },
   'deepseek-reasoner': { input: 0.55, output: 2.19 },
 
   // xAI
+  'grok-4-1': { input: 2, output: 10 },
   'grok-2': { input: 2, output: 10 },
   'grok-beta': { input: 5, output: 15 },
 

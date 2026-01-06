@@ -63,7 +63,7 @@ export default function DocsPage() {
                                 <span className="text-gray-500">// Make a chat request</span>{"\n"}
                                 <span className="text-purple-400">const</span> response = <span className="text-purple-400">await</span> ai.<span className="text-cyan-400">chat</span>({"{"}{"\n"}
                                 {"  "}provider: <span className="text-green-400">&apos;openai&apos;</span>,{"\n"}
-                                {"  "}model: <span className="text-green-400">&apos;gpt-4o&apos;</span>,{"\n"}
+                                {"  "}model: <span className="text-green-400">&apos;gemini-3-flash&apos;</span>,{"\n"}
                                 {"  "}messages: [{"{"} role: <span className="text-green-400">&apos;user&apos;</span>, content: <span className="text-green-400">&apos;Hello!&apos;</span> {"}"}]{"\n"}
                                 {"}"});{"\n\n"}
                                 console.<span className="text-cyan-400">log</span>(response.choices[<span className="text-purple-400">0</span>].message.content);
@@ -81,7 +81,7 @@ export default function DocsPage() {
                             <code className="text-sm">
                                 <span className="text-purple-400">for await</span> (<span className="text-purple-400">const</span> chunk <span className="text-purple-400">of</span> ai.<span className="text-cyan-400">chatStream</span>({"{"}{"\n"}
                                 {"  "}provider: <span className="text-green-400">&apos;openai&apos;</span>,{"\n"}
-                                {"  "}model: <span className="text-green-400">&apos;gpt-4o&apos;</span>,{"\n"}
+                                {"  "}model: <span className="text-green-400">&apos;gemini-3-flash&apos;</span>,{"\n"}
                                 {"  "}messages: [{"{"} role: <span className="text-green-400">&apos;user&apos;</span>, content: <span className="text-green-400">&apos;Write a poem&apos;</span> {"}"}]{"\n"}
                                 {"}"})) {"{"}{"\n"}
                                 {"  "}process.stdout.<span className="text-cyan-400">write</span>(chunk.choices[<span className="text-purple-400">0</span>]?.delta?.content ?? <span className="text-green-400">&apos;&apos;</span>);{"\n"}

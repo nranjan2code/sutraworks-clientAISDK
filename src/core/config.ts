@@ -24,14 +24,14 @@ export const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   anthropic: {
     name: 'anthropic',
     baseUrl: 'https://api.anthropic.com/v1',
-    defaultModel: 'claude-sonnet-4-20250514',
+    defaultModel: 'claude-sonnet-4-5-20250915',
     timeout: 60000,
     maxRetries: 3,
   },
   google: {
     name: 'google',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    defaultModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-3-flash',
     timeout: 60000,
     maxRetries: 3,
   },
@@ -45,7 +45,7 @@ export const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   mistral: {
     name: 'mistral',
     baseUrl: 'https://api.mistral.ai/v1',
-    defaultModel: 'mistral-large-latest',
+    defaultModel: 'mistral-large-3',
     timeout: 60000,
     maxRetries: 3,
   },
@@ -59,7 +59,7 @@ export const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   cohere: {
     name: 'cohere',
     baseUrl: 'https://api.cohere.ai/v1',
-    defaultModel: 'command-r-plus',
+    defaultModel: 'command-a',
     timeout: 60000,
     maxRetries: 3,
   },
@@ -86,15 +86,15 @@ export const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   },
   deepseek: {
     name: 'deepseek',
-    baseUrl: 'https://api.deepseek.com/v1',
-    defaultModel: 'deepseek-chat',
+    baseUrl: 'https://api.deepseek.com',
+    defaultModel: 'deepseek-v3-2',
     timeout: 60000,
     maxRetries: 3,
   },
   xai: {
     name: 'xai',
     baseUrl: 'https://api.x.ai/v1',
-    defaultModel: 'grok-2',
+    defaultModel: 'grok-4-1',
     timeout: 60000,
     maxRetries: 3,
   },

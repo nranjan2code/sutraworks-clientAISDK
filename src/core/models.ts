@@ -34,7 +34,22 @@ export interface ExtendedModelInfo extends ModelInfo {
  */
 const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
   openai: [
-    // GPT-4o family
+    // GPT-4o & o1 family
+    {
+      id: 'o1-pro',
+      name: 'o1 Pro',
+      provider: 'openai',
+      type: 'chat',
+      context_window: 200000,
+      max_output_tokens: 100000,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      supports_reasoning: true,
+      pricing: { input: 30, output: 120 },
+      releaseDate: '2025-12-05',
+      description: 'OpenAI most capable reasoning model',
+    },
     {
       id: 'gpt-4o',
       name: 'GPT-4o',
@@ -157,6 +172,35 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
   ],
 
   anthropic: [
+    // Claude 4.5
+    {
+      id: 'claude-opus-4-5-20251101',
+      name: 'Claude Opus 4.5',
+      provider: 'anthropic',
+      type: 'chat',
+      context_window: 500000,
+      max_output_tokens: 8192,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      pricing: { input: 15, output: 75 },
+      releaseDate: '2025-11-01',
+      description: 'Most capable Opus model for complex tasks',
+    },
+    {
+      id: 'claude-sonnet-4-5-20250915',
+      name: 'Claude Sonnet 4.5',
+      provider: 'anthropic',
+      type: 'chat',
+      context_window: 200000,
+      max_output_tokens: 8192,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      pricing: { input: 3, output: 15 },
+      releaseDate: '2025-09-15',
+      description: 'Balanced performance and speed',
+    },
     // Claude 4
     {
       id: 'claude-sonnet-4-20250514',
@@ -240,6 +284,37 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
   ],
 
   google: [
+    // Gemini 3
+    {
+      id: 'gemini-3-flash',
+      name: 'Gemini 3 Flash',
+      provider: 'google',
+      type: 'chat',
+      context_window: 2000000,
+      max_output_tokens: 8192,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      supports_json_mode: true,
+      pricing: { input: 0.05, output: 0.2 },
+      releaseDate: '2025-11-15',
+      description: 'Fastest multimodel with PhD-level reasoning',
+    },
+    {
+      id: 'gemini-3-pro',
+      name: 'Gemini 3 Pro',
+      provider: 'google',
+      type: 'chat',
+      context_window: 2000000,
+      max_output_tokens: 8192,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      supports_json_mode: true,
+      pricing: { input: 1.25, output: 5 },
+      releaseDate: '2025-11-15',
+      description: 'Best performing Google model for complex tasks',
+    },
     // Gemini 2.0
     {
       id: 'gemini-2.0-flash',
@@ -310,6 +385,32 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
 
   mistral: [
     {
+      id: 'mistral-large-3',
+      name: 'Mistral Large 3',
+      provider: 'mistral',
+      type: 'chat',
+      context_window: 256000,
+      max_output_tokens: 8192,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      supports_json_mode: true,
+      pricing: { input: 2, output: 6 },
+      releaseDate: '2026-01-02',
+    },
+    {
+      id: 'ministral-3',
+      name: 'Ministral 3',
+      provider: 'mistral',
+      type: 'chat',
+      context_window: 128000,
+      max_output_tokens: 8192,
+      supports_vision: false,
+      supports_tools: true,
+      supports_streaming: true,
+      pricing: { input: 0.1, output: 0.3 },
+    },
+    {
       id: 'mistral-large-latest',
       name: 'Mistral Large',
       provider: 'mistral',
@@ -368,6 +469,18 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
       context_window: 8192,
       pricing: { input: 0.1, output: 0 },
     },
+    {
+      id: 'mixtral-8x7b-32768',
+      name: 'Mixtral 8x7B',
+      provider: 'mistral',
+      type: 'chat',
+      context_window: 32768,
+      max_output_tokens: 8192,
+      supports_vision: false,
+      supports_tools: true,
+      supports_streaming: true,
+      pricing: { input: 0.24, output: 0.24 },
+    },
   ],
 
   groq: [
@@ -395,18 +508,7 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
       supports_streaming: true,
       pricing: { input: 0.05, output: 0.08 },
     },
-    {
-      id: 'mixtral-8x7b-32768',
-      name: 'Mixtral 8x7B',
-      provider: 'groq',
-      type: 'chat',
-      context_window: 32768,
-      max_output_tokens: 8192,
-      supports_vision: false,
-      supports_tools: true,
-      supports_streaming: true,
-      pricing: { input: 0.24, output: 0.24 },
-    },
+
     {
       id: 'gemma2-9b-it',
       name: 'Gemma 2 9B',
@@ -422,6 +524,20 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
   ],
 
   cohere: [
+    {
+      id: 'command-a',
+      name: 'Command A',
+      provider: 'cohere',
+      type: 'chat',
+      context_window: 256000,
+      max_output_tokens: 4096,
+      supports_vision: false,
+      supports_tools: true,
+      supports_streaming: true,
+      pricing: { input: 2.5, output: 10 },
+      releaseDate: '2025-03-01',
+      description: 'Agentic model with advanced tool use',
+    },
     {
       id: 'command-r-plus',
       name: 'Command R+',
@@ -463,6 +579,10 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
       pricing: { input: 0.1, output: 0 },
     },
   ],
+
+
+
+
 
   together: [
     {
@@ -652,6 +772,20 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
 
   deepseek: [
     {
+      id: 'deepseek-v3-2',
+      name: 'DeepSeek V3.2',
+      provider: 'deepseek',
+      type: 'chat',
+      context_window: 128000,
+      max_output_tokens: 8192,
+      supports_vision: false,
+      supports_tools: true,
+      supports_streaming: true,
+      supports_reasoning: true,
+      pricing: { input: 0.14, output: 0.28 },
+      releaseDate: '2025-12-01',
+    },
+    {
       id: 'deepseek-chat',
       name: 'DeepSeek Chat',
       provider: 'deepseek',
@@ -693,6 +827,19 @@ const MODEL_REGISTRY: Record<ProviderName, ExtendedModelInfo[]> = {
   ],
 
   xai: [
+    {
+      id: 'grok-4-1',
+      name: 'Grok 4.1',
+      provider: 'xai',
+      type: 'chat',
+      context_window: 128000,
+      max_output_tokens: 8192,
+      supports_vision: true,
+      supports_tools: true,
+      supports_streaming: true,
+      pricing: { input: 2, output: 10 },
+      releaseDate: '2026-01-01',
+    },
     {
       id: 'grok-2',
       name: 'Grok 2',

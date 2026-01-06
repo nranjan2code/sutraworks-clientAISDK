@@ -10,7 +10,7 @@ const providers = [
     {
         name: "OpenAI",
         slug: "openai",
-        models: ["GPT-4o", "GPT-4o Mini", "o1"],
+        models: ["GPT-4o", "o1 Pro", "o1"],
         features: { chat: true, streaming: true, embeddings: true, vision: true },
         color: "from-green-500 to-emerald-600",
         description: "Industry-leading models including GPT-4o with vision and function calling.",
@@ -18,7 +18,7 @@ const providers = [
     {
         name: "Anthropic",
         slug: "anthropic",
-        models: ["Claude 4 Sonnet", "Claude 3.5 Sonnet", "Claude 3.5 Haiku"],
+        models: ["Claude 4.5 Sonnet", "Claude 4.5 Opus", "Claude 3.5 Sonnet"],
         features: { chat: true, streaming: true, embeddings: false, vision: true },
         color: "from-orange-500 to-amber-600",
         description: "Claude models known for safety, helpfulness, and long context windows.",
@@ -26,7 +26,7 @@ const providers = [
     {
         name: "Google Gemini",
         slug: "google",
-        models: ["Gemini 2.0 Flash", "Gemini 2.0 Thinking", "Gemini 1.5 Pro"],
+        models: ["Gemini 3 Flash", "Gemini 3 Pro", "Gemini 2.0 Flash"],
         features: { chat: true, streaming: true, embeddings: true, vision: true },
         color: "from-blue-500 to-indigo-600",
         description: "Google's multimodal AI with excellent reasoning capabilities.",
@@ -213,9 +213,9 @@ export default function ProvidersPage() {
                             <code className="text-sm">
                                 <span className="text-gray-500">// Same interface, any provider</span>{"\n\n"}
                                 <span className="text-gray-500">// Use OpenAI</span>{"\n"}
-                                <span className="text-purple-400">await</span> ai.<span className="text-cyan-400">chat</span>({"{"} provider: <span className="text-green-400">&apos;openai&apos;</span>, model: <span className="text-green-400">&apos;gpt-4o&apos;</span>, ... {"}"});{"\n\n"}
+                                <span className="text-purple-400">await</span> ai.<span className="text-cyan-400">chat</span>({"{"} provider: <span className="text-green-400">&apos;google&apos;</span>, model: <span className="text-green-400">&apos;gemini-3-flash&apos;</span>, ... {"}"});{"\n\n"}
                                 <span className="text-gray-500">// Switch to Claude</span>{"\n"}
-                                <span className="text-purple-400">await</span> ai.<span className="text-cyan-400">chat</span>({"{"} provider: <span className="text-green-400">&apos;anthropic&apos;</span>, model: <span className="text-green-400">&apos;claude-sonnet-4-20250514&apos;</span>, ... {"}"});{"\n\n"}
+                                <span className="text-purple-400">await</span> ai.<span className="text-cyan-400">chat</span>({"{"} provider: <span className="text-green-400">&apos;anthropic&apos;</span>, model: <span className="text-green-400">&apos;claude-sonnet-4-5-20250915&apos;</span>, ... {"}"});{"\n\n"}
                                 <span className="text-gray-500">// Or run locally with Ollama</span>{"\n"}
                                 <span className="text-purple-400">await</span> ai.<span className="text-cyan-400">chat</span>({"{"} provider: <span className="text-green-400">&apos;ollama&apos;</span>, model: <span className="text-green-400">&apos;llama3.2&apos;</span>, ... {"}"});
                             </code>
