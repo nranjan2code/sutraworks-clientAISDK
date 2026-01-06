@@ -56,7 +56,7 @@ export default function CostRouterDemo() {
 
             // 2. Decide
             let route: 'FAST' | 'SMART' = 'FAST';
-            let provider = fastProvider;
+            let provider: string = fastProvider;
             let model = fastProvider === 'groq' ? 'llama3-8b-8192' : ollamaModel;
 
             // Logic: If complex, go SMART. If simple, go FAST.
