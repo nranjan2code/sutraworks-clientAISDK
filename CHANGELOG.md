@@ -5,6 +5,37 @@ All notable changes to the Sutraworks Client AI SDK will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-01-10
+
+### Fixed
+
+- **Examples**: Fixed all TypeScript errors in example files
+  - `basic-usage.ts`: Updated model names, added void references for optional functions
+  - `streaming.ts`: Removed unused `ChatResponse` import
+  - `ollama-local.ts`: Fixed unused `_remoteAI` variable, added cleanup
+  - `secure-rag/index.ts`: Removed unused import
+  
+- **Model Names**: Updated to current versions
+  - `gpt-4-turbo-preview` → `gpt-4-turbo`
+  - `claude-3-sonnet-20240229` → `claude-sonnet-4-20250514`
+  - `mixtral-8x7b-32768` → `llama-3.3-70b-versatile`
+
+### Added
+
+- **NPM Scripts**: New convenience scripts
+  - `npm run test:integration` - Run Ollama integration tests
+  - `npm run example` - Run basic usage example
+  - `npm run example:streaming` - Run streaming examples
+  - `npm run example:ollama` - Run Ollama local examples
+
+### Documentation
+
+- Updated README with accurate Anthropic model claims
+- Enhanced ARCHITECTURE.md with provider support table and file structure
+- Updated CONTRIBUTING.md with new npm scripts
+
+---
+
 ## [2.0.0] - 2026-01-05
 
 ### 🚀 Major Release - Enterprise Edition

@@ -59,7 +59,7 @@ Traditional AI integrations require sending your API keys to a backend server. *
 
 ### 🌐 Universal Provider Support
 - OpenAI (GPT-4o, GPT-4 Turbo)
-- Anthropic (Claude 4, Claude 3.5)
+- Anthropic (Claude Sonnet 4, Claude 3.5 Sonnet)
 - Google (Gemini 2.0, Gemini Pro)
 - Ollama (Local models)
 - Mistral, Groq, Cohere

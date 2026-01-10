@@ -1,6 +1,8 @@
 # Architecture Guide
 
-This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.0).
+This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.0.0).
+
+> **Test Stats**: 516 tests | 81% coverage | 16 test files
 
 ## System Overview
 
@@ -118,4 +120,57 @@ sequenceDiagram
     Enc->>Enc: Decrypt
     Enc-->>KM: "sk-..."
     KM-->>App: "sk-..."
+```
+
+## Supported Providers
+
+| Provider | Chat | Stream | Embed | Vision | Local |
+|----------|:----:|:------:|:-----:|:------:|:-----:|
+| OpenAI | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Anthropic | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Google Gemini | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Ollama | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Groq | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Mistral | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Cohere | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Together AI | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Fireworks | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Perplexity | ✅ | ✅ | ❌ | ❌ | ❌ |
+| DeepSeek | ✅ | ✅ | ❌ | ❌ | ❌ |
+| xAI (Grok) | ✅ | ✅ | ❌ | ❌ | ❌ |
+
+## Development Commands
+
+```bash
+# Run tests
+npm test
+
+# Run integration tests (requires Ollama)
+npm run test:integration
+
+# Run examples
+npm run example
+
+# Build all formats
+npm run build
+
+# Type check
+npm run typecheck
+```
+
+## File Structure
+
+```
+src/
+├── index.ts              # Public API exports
+├── core/
+│   ├── client.ts         # SutraAI main class (903 lines)
+│   ├── config.ts         # Configuration management
+│   ├── models.ts         # Model registry (100+ models)
+│   └── registry.ts       # Provider registry + circuit breaker
+├── providers/            # 12 provider adapters
+├── middleware/           # Request/response pipeline
+├── keys/                 # Encryption + storage
+├── streaming/            # SSE parsing + collection
+└── utils/                # Cache, retry, errors, tokens
 ```

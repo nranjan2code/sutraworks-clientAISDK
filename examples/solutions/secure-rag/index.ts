@@ -1,4 +1,4 @@
-import { SutraAI, ChatResponse } from '@sutraworks/client-ai-sdk';
+import { SutraAI } from '@sutraworks/client-ai-sdk';
 
 /**
  * Secure Client-Side RAG (Retrieval Augmented Generation)

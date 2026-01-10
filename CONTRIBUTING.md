@@ -55,6 +55,14 @@ npm run test:coverage
 # Run tests in watch mode
 npm run test:watch
 
+# Run integration tests (requires Ollama)
+npm run test:integration
+
+# Run examples
+npm run example              # Basic usage example
+npm run example:streaming    # Streaming examples
+npm run example:ollama       # Ollama local examples
+
 # Build all formats (ESM, CJS, UMD, Types)
 npm run build
 
