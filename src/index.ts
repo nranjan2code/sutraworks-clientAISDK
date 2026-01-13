@@ -1,5 +1,5 @@
 /**
- * Sutraworks Client AI SDK v2.0.2
+ * Sutraworks Client AI SDK
  * Universal client-side AI SDK with BYOK (Bring Your Own Key) architecture
  * 
  * Features:
@@ -17,8 +17,10 @@
  *
  * @packageDocumentation
  * @module @sutraworks/client-ai-sdk
- * @version 2.0.2
  */
+
+/** SDK Version - synchronized with package.json */
+export const VERSION = '2.0.0';
 
 // Core modules
 export { SutraAI } from './core/client';
@@ -208,8 +210,20 @@ export type {
 // Error class
 export { SutraError } from './types';
 
-// Version
-export const VERSION = '2.0.2';
+// Circular buffer utilities (O(1) rate limiting)
+export { CircularBuffer, TimeWindowCounter, TokenBucket } from './utils/circular-buffer';
+
+// Telemetry and observability
+export {
+  TelemetryManager,
+  defaultTelemetryManager,
+  createConsoleTelemetryHook,
+} from './utils/telemetry';
+export type { TelemetryHook, TelemetryContext, RequestMetrics } from './utils/telemetry';
+
+// Middleware priority constants
+export { MIDDLEWARE_PRIORITY } from './middleware';
+export type { MiddlewarePriority } from './middleware';
 
 // Default export
 import { SutraAI } from './core/client';

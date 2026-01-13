@@ -5,6 +5,50 @@ All notable changes to the Sutraworks Client AI SDK will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-01-13
+
+### 🏢 Enterprise-Level Fixes - Zero Technical Debt
+
+Major release focused on performance, reliability, and observability improvements.
+
+### Added
+
+#### Performance & Reliability
+- **Sliding Window Metrics**: Circuit breaker now uses bounded 100-sample sliding window instead of unbounded accumulation
+- **O(1) Rate Limiting**: New `CircularBuffer`, `TimeWindowCounter`, `TokenBucket` utilities replace O(n) array operations
+- **Provider Health Checks**: New `registry.warmup()` method for proactive startup validation
+- **Stream Abort Cleanup**: Proper `reader.cancel()` and abort handler cleanup prevents zombie connections
+
+#### Observability
+- **Telemetry Hooks**: New `TelemetryManager` for OpenTelemetry/DataDog integration
+  - `onRequestStart`, `onRequestEnd`, `onRequestError`
+  - `onStreamChunk`, `onStreamEnd`, `onStreamError`
+  - `onRetry`, `onCircuitBreakerOpen`, `onCircuitBreakerClose`
+- **Console Telemetry Hook**: `createConsoleTelemetryHook()` for debugging
+
+#### API Improvements
+- **Middleware Priority Constants**: `MIDDLEWARE_PRIORITY.FIRST/HIGH/RATE_LIMIT/NORMAL/LOW/LAST`
+- **EventEmitter Limits**: Warning at 10 listeners, hard limit at 100 (prevents memory leaks)
+- **Salt Rotation**: `Encryption.reEncryptWithNewPassword()` for key migration
+- **ModelRegistry**: Added `getProviders()`, `getLastUpdated()`, `findModel()` methods
+
+### Changed
+
+- **Test Count**: 554 tests (up from 551)
+- **Rate limit middleware**: Now uses `TimeWindowCounter` for O(1) performance
+- **Metrics structure**: `totalLatency` replaced with `latencyWindow[]` sliding window
+- `VERSION` export synchronized with package.json
+
+### Fixed
+
+- Memory leak in circuit breaker metrics (unbounded `totalLatency` accumulation)
+- Zombie connections from aborted streams (missing reader cleanup)
+- EventEmitter memory leak potential (no listener limits)
+- SessionStorage test mocking in jsdom environment
+- Duplicate `VERSION` export in index.ts
+
+---
+
 ## [2.0.2] - 2026-01-13
 
 ### Added

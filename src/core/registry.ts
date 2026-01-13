@@ -4,7 +4,7 @@
  * @module core/registry
  */
 
-import type { ProviderName, ProviderConfig, ModelInfo } from '../types';
+import type { ProviderName, ProviderConfig, ModelInfo, ExtendedModelInfo } from '../types';
 import { SutraError } from '../types';
 import { BaseProvider } from '../providers/base';
 import { OpenAIProvider } from '../providers/openai';
@@ -61,13 +61,26 @@ export interface ProviderHealth {
 }
 
 /**
- * Provider metrics
+ * Latency sample for sliding window
+ */
+interface LatencySample {
+  readonly timestamp: number;
+  readonly latency: number;
+}
+
+/**
+ * Provider metrics with sliding window for latency (prevents memory leaks)
  */
 interface ProviderMetrics {
   requests: number;
   successes: number;
   failures: number;
-  totalLatency: number;
+  /** Sliding window of latency samples (max 100 entries) */
+  readonly latencyWindow: LatencySample[];
+  /** Maximum size of latency window */
+  readonly windowSize: number;
+  /** Window TTL in ms (samples older than this are evicted) */
+  readonly windowTtl: number;
   lastError?: string;
   lastErrorTime?: number;
 }
@@ -132,9 +145,46 @@ export class ProviderRegistry {
         requests: 0,
         successes: 0,
         failures: 0,
-        totalLatency: 0,
+        latencyWindow: [],
+        windowSize: 100,
+        windowTtl: 300000, // 5 minutes
       });
     }
+  }
+
+  /**
+   * Record latency sample to sliding window
+   */
+  private recordLatencySample(name: ProviderName, latency: number): void {
+    const metrics = this.metrics.get(name);
+    if (!metrics) return;
+
+    const now = Date.now();
+
+    // Add new sample
+    metrics.latencyWindow.push({ timestamp: now, latency });
+
+    // Evict samples beyond window size
+    while (metrics.latencyWindow.length > metrics.windowSize) {
+      metrics.latencyWindow.shift();
+    }
+
+    // Evict stale samples (older than TTL)
+    const cutoff = now - metrics.windowTtl;
+    while (metrics.latencyWindow.length > 0 && metrics.latencyWindow[0].timestamp < cutoff) {
+      metrics.latencyWindow.shift();
+    }
+  }
+
+  /**
+   * Calculate average latency from sliding window
+   */
+  private calculateAverageLatency(name: ProviderName): number {
+    const metrics = this.metrics.get(name);
+    if (!metrics || metrics.latencyWindow.length === 0) return 0;
+
+    const sum = metrics.latencyWindow.reduce((acc, s) => acc + s.latency, 0);
+    return sum / metrics.latencyWindow.length;
   }
 
   /**
@@ -155,16 +205,16 @@ export class ProviderRegistry {
    */
   registerPlugin(plugin: ProviderPlugin): void {
     this.providerClasses.set(plugin.name, plugin.provider);
-    
+
     if (plugin.defaultConfig) {
       this.providerConfigs.set(plugin.name, plugin.defaultConfig);
     }
-    
+
     this.initializeMetrics(plugin.name);
-    
+
     // Clear cached instance if exists
     this.providers.delete(plugin.name);
-    
+
     this.events.emit({
       type: 'provider:registered' as any,
       timestamp: Date.now(),
@@ -191,13 +241,13 @@ export class ProviderRegistry {
     if (builtIn.includes(name)) {
       return false;
     }
-    
+
     this.providerClasses.delete(name);
     this.providerConfigs.delete(name);
     this.providers.delete(name);
     this.circuitBreakers.delete(name);
     this.metrics.delete(name);
-    
+
     return true;
   }
 
@@ -255,7 +305,7 @@ export class ProviderRegistry {
   ): Promise<T> {
     const startTime = Date.now();
     const metrics = this.metrics.get(name);
-    
+
     if (metrics) {
       metrics.requests++;
     }
@@ -265,15 +315,15 @@ export class ProviderRegistry {
     }
 
     const breaker = this.getCircuitBreaker(name);
-    
+
     try {
       const result = await breaker.execute(fn);
-      
+
       if (metrics) {
         metrics.successes++;
-        metrics.totalLatency += Date.now() - startTime;
+        this.recordLatencySample(name, Date.now() - startTime);
       }
-      
+
       return result;
     } catch (error) {
       if (metrics) {
@@ -291,11 +341,11 @@ export class ProviderRegistry {
   recordSuccess(name: ProviderName, latency: number): void {
     const breaker = this.circuitBreakers.get(name);
     breaker?.recordSuccess();
-    
+
     const metrics = this.metrics.get(name);
     if (metrics) {
       metrics.successes++;
-      metrics.totalLatency += latency;
+      this.recordLatencySample(name, latency);
     }
   }
 
@@ -305,7 +355,7 @@ export class ProviderRegistry {
   recordFailure(name: ProviderName, error: Error): void {
     const breaker = this.circuitBreakers.get(name);
     breaker?.recordFailure();
-    
+
     const metrics = this.metrics.get(name);
     if (metrics) {
       metrics.failures++;
@@ -326,12 +376,10 @@ export class ProviderRegistry {
     const metrics = this.metrics.get(name);
 
     const totalRequests = metrics?.requests ?? 0;
-    const successRate = totalRequests > 0 
-      ? (metrics?.successes ?? 0) / totalRequests 
+    const successRate = totalRequests > 0
+      ? (metrics?.successes ?? 0) / totalRequests
       : 1;
-    const averageLatency = totalRequests > 0
-      ? (metrics?.totalLatency ?? 0) / totalRequests
-      : 0;
+    const averageLatency = this.calculateAverageLatency(name);
 
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
     if (successRate < 0.5) {
@@ -361,6 +409,69 @@ export class ProviderRegistry {
   }
 
   /**
+   * Proactively check health of providers by making lightweight requests
+   * Call this on application startup to detect issues early
+   * @param providers - Specific providers to check (defaults to all available)
+   * @param options - Configuration options
+   * @returns Map of provider names to their health status
+   */
+  async warmup(
+    providers?: ProviderName[],
+    options?: {
+      /** Timeout per provider in ms (default: 10000) */
+      timeout?: number;
+      /** Continue checking other providers on error (default: true) */
+      continueOnError?: boolean;
+      /** Callback for each provider result */
+      onProviderChecked?: (name: ProviderName, health: ProviderHealth) => void;
+    }
+  ): Promise<Map<ProviderName, ProviderHealth>> {
+    const healthMap = new Map<ProviderName, ProviderHealth>();
+    const targets = providers ?? this.getAvailableProviders();
+    const timeout = options?.timeout ?? 10000;
+    const continueOnError = options?.continueOnError ?? true;
+
+    const checkProvider = async (name: ProviderName): Promise<void> => {
+      const start = Date.now();
+
+      try {
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+          // Try to get provider and list models (lightweight check)
+          const provider = this.getProvider(name);
+          await provider.listModels();
+
+          clearTimeout(timeoutId);
+          this.recordSuccess(name, Date.now() - start);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      } catch (error) {
+        this.recordFailure(name, error as Error);
+
+        if (!continueOnError) {
+          throw error;
+        }
+      }
+
+      const health = this.getProviderHealth(name);
+      if (health) {
+        healthMap.set(name, health);
+        options?.onProviderChecked?.(name, health);
+      }
+    };
+
+    // Check all providers in parallel
+    await Promise.allSettled(targets.map(checkProvider));
+
+    return healthMap;
+  }
+
+  /**
    * Reset circuit breaker for a provider
    */
   resetCircuitBreaker(name: ProviderName): void {
@@ -381,11 +492,14 @@ export class ProviderRegistry {
    * Reset metrics for a provider
    */
   resetMetrics(name: ProviderName): void {
+    const existing = this.metrics.get(name);
     this.metrics.set(name, {
       requests: 0,
       successes: 0,
       failures: 0,
-      totalLatency: 0,
+      latencyWindow: [],
+      windowSize: existing?.windowSize ?? 100,
+      windowTtl: existing?.windowTtl ?? 300000,
     });
   }
 
@@ -430,7 +544,7 @@ export class ProviderRegistry {
     // Prefer model registry (instant, no API calls)
     const registry = getModelRegistry();
     const registryModels = registry.getAllModels();
-    
+
     if (registryModels.length > 0) {
       return registryModels;
     }
@@ -465,7 +579,7 @@ export class ProviderRegistry {
     // Prefer model registry
     const registry = getModelRegistry();
     const registryModels = registry.getModelsForProvider(name);
-    
+
     if (registryModels.length > 0) {
       return registryModels;
     }
@@ -507,17 +621,17 @@ export class ProviderRegistry {
     // Check model registry first
     const registry = getModelRegistry();
     const models = registry.getChatModels(name);
-    
+
     if (models.length > 0) {
       switch (feature) {
         case 'streaming':
-          return models.some(m => m.supports_streaming);
+          return models.some((m: ExtendedModelInfo) => m.supports_streaming);
         case 'embeddings':
           return registry.getEmbeddingModels(name).length > 0;
         case 'vision':
-          return models.some(m => m.supports_vision);
+          return models.some((m: ExtendedModelInfo) => m.supports_vision);
         case 'tools':
-          return models.some(m => m.supports_tools);
+          return models.some((m: ExtendedModelInfo) => m.supports_tools);
       }
     }
 

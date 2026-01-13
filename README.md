@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.1-blue.svg" alt="Version 2.0.1" />
+  <img src="https://img.shields.io/badge/version-2.0.3-blue.svg" alt="Version 2.0.3" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License" />
-  <img src="https://img.shields.io/badge/tests-551%20passing-brightgreen.svg" alt="Tests Passing" />
+  <img src="https://img.shields.io/badge/tests-554%20passing-brightgreen.svg" alt="Tests Passing" />
   <img src="https://img.shields.io/badge/coverage-81%25-brightgreen.svg" alt="Coverage" />
   <img src="https://img.shields.io/badge/zero-dependencies-orange.svg" alt="Zero Dependencies" />
 </p>
@@ -81,7 +81,9 @@ Traditional AI integrations require sending your API keys to a backend server, c
 - **Intelligent caching** with SHA-256 keys & LRU eviction
 - **Batch processing** with concurrency control
 - **Circuit breaker** pattern for resilient retries
+- **O(1) rate limiting** — circular buffer implementation
 - **Streaming** with proper abort handling
+- **Sliding window metrics** — bounded memory usage
 
 </td>
 <td>
@@ -89,7 +91,8 @@ Traditional AI integrations require sending your API keys to a backend server, c
 ### 🔧 Developer Experience
 - **Full TypeScript** support with 50+ exported types
 - **Zero runtime dependencies** — pure browser APIs
-- **Middleware pipeline** for request/response transformation
+- **Middleware pipeline** with priority constants
+- **Telemetry hooks** for OpenTelemetry integration
 - **Prompt templates** with variable validation
 - **ESM, CJS, UMD** builds for any environment
 
@@ -313,6 +316,44 @@ ai.use({
 });
 ```
 
+### Middleware Priorities
+
+Use built-in priority constants for consistent ordering:
+
+```typescript
+import { MIDDLEWARE_PRIORITY } from '@sutraworks/client-ai-sdk';
+
+ai.use({
+  name: 'my-middleware',
+  priority: MIDDLEWARE_PRIORITY.NORMAL, // 50
+  // FIRST (0), HIGH (10), RATE_LIMIT (20), NORMAL (50), LOW (80), LAST (100)
+});
+```
+
+### Observability & Telemetry
+
+Integrate with OpenTelemetry, DataDog, or other observability platforms:
+
+```typescript
+import { 
+  TelemetryManager, 
+  createConsoleTelemetryHook 
+} from '@sutraworks/client-ai-sdk';
+
+const telemetry = new TelemetryManager();
+
+// Add console logging for debugging
+telemetry.register(createConsoleTelemetryHook({ logLevel: 'info' }));
+
+// Or integrate with your observability stack
+telemetry.register({
+  onRequestStart: (ctx) => opentelemetry.startSpan(ctx.requestId),
+  onRequestEnd: (ctx, metrics) => opentelemetry.endSpan(ctx.requestId, metrics),
+  onRetry: (ctx, attempt, delay) => metrics.increment('ai.retries'),
+  onCircuitBreakerOpen: (provider) => alerts.send(`Circuit open: ${provider}`),
+});
+```
+
 ---
 
 ## 📋 Prompt Templates
@@ -385,6 +426,10 @@ const byModel = ai.getUsageByModel();
 console.log(byModel);
 // { 'gpt-4-turbo': { input: 150, output: 200, cost: 0.0125 } }
 ```
+
+> [!NOTE]
+> Client-side token counting is an **estimation** based on heuristics (avg 4 chars/token). 
+> For billing reconciliation, always use the usage data returned by the provider's API.
 
 ---
 
@@ -527,7 +572,7 @@ src/
 │   └── validation.ts     # Request validation
 ├── keys/                 # Key management & encryption
 │   ├── manager.ts        # Key manager with mutex
-│   ├── encryption.ts     # AES-256-GCM encryption
+│   ├── encryption.ts     # AES-256-GCM + salt rotation
 │   └── storage.ts        # Storage adapters
 ├── streaming/            # Stream handling
 │   ├── handler.ts        # Stream utilities
@@ -537,7 +582,9 @@ src/
     ├── retry.ts          # Retry + circuit breaker
     ├── errors.ts         # Error handling
     ├── tokens.ts         # Token estimation
-    └── events.ts         # Event emitter
+    ├── events.ts         # Event emitter (with limits)
+    ├── circular-buffer.ts # O(1) rate limiting utilities
+    └── telemetry.ts      # Observability hooks
 ```
 
 ---
@@ -548,7 +595,7 @@ src/
 # Install dependencies
 npm install
 
-# Run tests (551 tests, 81% coverage)
+# Run tests (554 tests)
 npm test
 
 # Run tests with coverage report

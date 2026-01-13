@@ -16,6 +16,7 @@ import type {
 } from '../types';
 import { SutraError } from '../types';
 import { Encryption } from '../keys/encryption';
+import { TimeWindowCounter } from '../utils/circular-buffer';
 
 // Re-export validation middleware
 export {
@@ -26,6 +27,28 @@ export {
   MODEL_CONTEXT_WINDOWS,
 } from './validation';
 export type { ValidationOptions, ValidationError } from './validation';
+
+/**
+ * Middleware priority constants
+ * Lower values run first (before request) and last (after response)
+ * Use these constants for consistent ordering across your middleware stack
+ */
+export const MIDDLEWARE_PRIORITY = {
+  /** Metrics, timing, observability - runs first */
+  FIRST: 0,
+  /** Validation, authentication - runs early */
+  HIGH: 10,
+  /** Rate limiting, caching - runs before normal */
+  RATE_LIMIT: 20,
+  /** Default priority for custom middleware */
+  NORMAL: 50,
+  /** Logging, debugging - runs late */
+  LOW: 80,
+  /** Fallback handlers, error recovery - runs last */
+  LAST: 100,
+} as const;
+
+export type MiddlewarePriority = typeof MIDDLEWARE_PRIORITY[keyof typeof MIDDLEWARE_PRIORITY];
 
 /**
  * Middleware manager for handling request/response pipelines
@@ -291,7 +314,7 @@ export function createRetryMiddleware(options?: {
 
       // Calculate delay
       const delay = error.retryAfter ?? Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
-      
+
       // Store retry info
       context.data.set('retryAttempt', attempt + 1);
       context.data.set('retryDelay', delay);
@@ -303,36 +326,41 @@ export function createRetryMiddleware(options?: {
 }
 
 /**
- * Rate limiting middleware - client-side rate limiting
+ * Rate limiting middleware - client-side rate limiting with O(1) operations
+ * Uses circular buffer for efficient time-window tracking
  */
 export function createRateLimitMiddleware(options: {
   requestsPerMinute: number;
   tokensPerMinute?: number;
 }): Middleware {
-  const requestTimes: number[] = [];
-  const tokenCounts: Array<{ time: number; tokens: number }> = [];
   const { requestsPerMinute, tokensPerMinute } = options;
 
-  const cleanOldEntries = () => {
-    const oneMinuteAgo = Date.now() - 60000;
-    while (requestTimes.length > 0 && requestTimes[0] < oneMinuteAgo) {
-      requestTimes.shift();
-    }
-    while (tokenCounts.length > 0 && tokenCounts[0].time < oneMinuteAgo) {
-      tokenCounts.shift();
+  // Use TimeWindowCounter for O(1) operations instead of O(n) array shift
+  const requestCounter = new TimeWindowCounter(60000, requestsPerMinute + 10);
+  const tokenCounter = tokensPerMinute
+    ? new TimeWindowCounter(60000, Math.ceil(tokensPerMinute / 100) + 10)
+    : null;
+
+  // Track token totals within window
+  let tokenTotal = 0;
+  const tokenTimestamps: Array<{ time: number; tokens: number }> = [];
+
+  const cleanTokens = () => {
+    const cutoff = Date.now() - 60000;
+    while (tokenTimestamps.length > 0 && tokenTimestamps[0].time < cutoff) {
+      tokenTotal -= tokenTimestamps[0].tokens;
+      tokenTimestamps.shift();
     }
   };
 
   return {
     name: 'rate-limit',
-    priority: 5, // Run before most middleware
+    priority: MIDDLEWARE_PRIORITY.RATE_LIMIT,
 
     beforeRequest: async (request, _context) => {
-      cleanOldEntries();
-
-      // Check request rate
-      if (requestTimes.length >= requestsPerMinute) {
-        const waitTime = 60000 - (Date.now() - requestTimes[0]);
+      // Check request rate using O(1) counter
+      if (requestCounter.wouldExceed(requestsPerMinute)) {
+        const waitTime = requestCounter.timeUntilAllowed(requestsPerMinute);
         throw new SutraError(
           `Rate limit exceeded: ${requestsPerMinute} requests per minute`,
           'RATE_LIMITED',
@@ -340,26 +368,30 @@ export function createRateLimitMiddleware(options: {
         );
       }
 
-      // Check token rate (if configured and estimatable)
-      if (tokensPerMinute) {
-        const totalTokens = tokenCounts.reduce((sum, t) => sum + t.tokens, 0);
-        if (totalTokens >= tokensPerMinute) {
-          const waitTime = 60000 - (Date.now() - tokenCounts[0].time);
+      // Check token rate (if configured)
+      if (tokensPerMinute && tokenCounter) {
+        cleanTokens();
+        if (tokenTotal >= tokensPerMinute) {
+          const waitTime = tokenTimestamps.length > 0
+            ? 60000 - (Date.now() - tokenTimestamps[0].time)
+            : 60000;
           throw new SutraError(
             `Token rate limit exceeded: ${tokensPerMinute} tokens per minute`,
             'RATE_LIMITED',
-            { retryable: true, retryAfter: waitTime }
+            { retryable: true, retryAfter: Math.max(0, waitTime) }
           );
         }
       }
 
-      requestTimes.push(Date.now());
+      requestCounter.record();
       return request;
     },
 
     afterResponse: async (response, _context) => {
-      if (response.usage) {
-        tokenCounts.push({
+      if (response.usage && tokensPerMinute) {
+        cleanTokens();
+        tokenTotal += response.usage.total_tokens;
+        tokenTimestamps.push({
           time: Date.now(),
           tokens: response.usage.total_tokens,
         });
@@ -375,7 +407,7 @@ export function createRateLimitMiddleware(options: {
 export function createTimeoutMiddleware(timeoutMs: number): Middleware {
   return {
     name: 'timeout',
-    priority: 2,
+    priority: MIDDLEWARE_PRIORITY.HIGH,
 
     beforeRequest: async (request, context) => {
       // Set up timeout

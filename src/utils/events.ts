@@ -15,22 +15,57 @@ import type {
 } from '../types';
 
 /**
+ * Default max listeners before warning
+ */
+const DEFAULT_MAX_LISTENERS_WARNING = 10;
+
+/**
+ * Hard limit for max listeners per event type
+ */
+const DEFAULT_MAX_LISTENERS_HARD = 100;
+
+/**
  * Event emitter for SDK events
  * Allows monitoring of requests, streams, and key operations
  * without exposing sensitive data
  */
 export class EventEmitter {
-  private listeners: Map<SutraEventType, Set<SutraEventListener>> = new Map();
-  private allListeners: Set<SutraEventListener> = new Set();
+  private readonly listeners: Map<SutraEventType, Set<SutraEventListener>> = new Map();
+  private readonly allListeners: Set<SutraEventListener> = new Set();
+  private maxListenersWarning: number = DEFAULT_MAX_LISTENERS_WARNING;
+  private maxListenersHard: number = DEFAULT_MAX_LISTENERS_HARD;
+  private warningEmitted: Set<SutraEventType> = new Set();
 
   /**
    * Subscribe to a specific event type
+   * @throws SutraError if max listeners hard limit exceeded
    */
   on<T extends SutraEventBase>(type: SutraEventType, listener: SutraEventListener<T>): () => void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
-    this.listeners.get(type)!.add(listener as SutraEventListener);
+
+    const typeListeners = this.listeners.get(type)!;
+    const currentCount = typeListeners.size;
+
+    // Check hard limit
+    if (currentCount >= this.maxListenersHard) {
+      throw new Error(
+        `Max listeners (${this.maxListenersHard}) exceeded for event "${type}". ` +
+        'This may indicate a memory leak. Use setMaxListeners() to increase limit if intentional.'
+      );
+    }
+
+    // Emit warning at threshold (only once per event type)
+    if (currentCount >= this.maxListenersWarning && !this.warningEmitted.has(type)) {
+      this.warningEmitted.add(type);
+      console.warn(
+        `EventEmitter: ${currentCount + 1} listeners added for "${type}" event. ` +
+        'This may indicate a memory leak. Use setMaxListeners() to suppress this warning.'
+      );
+    }
+
+    typeListeners.add(listener as SutraEventListener);
 
     // Return unsubscribe function
     return () => this.off(type, listener);
@@ -101,6 +136,32 @@ export class EventEmitter {
       count += listeners.size;
     }
     return count;
+  }
+
+  /**
+   * Set the maximum number of listeners before warning
+   * @param n - Max listeners (0 for unlimited warnings)
+   */
+  setMaxListeners(n: number): this {
+    this.maxListenersWarning = Math.max(0, n);
+    this.warningEmitted.clear();
+    return this;
+  }
+
+  /**
+   * Set the hard limit for maximum listeners (throws if exceeded)
+   * @param n - Hard limit (0 for unlimited)
+   */
+  setMaxListenersHard(n: number): this {
+    this.maxListenersHard = n <= 0 ? Infinity : n;
+    return this;
+  }
+
+  /**
+   * Get the current max listeners warning threshold
+   */
+  getMaxListeners(): number {
+    return this.maxListenersWarning;
   }
 }
 

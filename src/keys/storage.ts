@@ -118,11 +118,12 @@ export class LocalStorageImpl implements IKeyStorage {
 
   private isAvailable(): boolean {
     try {
+      if (typeof localStorage === 'undefined') return false;
       const test = '__sutra_test__';
       localStorage.setItem(test, test);
       localStorage.removeItem(test);
       return true;
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -155,12 +156,26 @@ export class LocalStorageImpl implements IKeyStorage {
       encrypted: this.encrypt,
     };
 
-    localStorage.setItem(this.getStorageKey(provider), storedKey);
-    localStorage.setItem(this.getMetaKey(provider), JSON.stringify(meta));
+    try {
+      localStorage.setItem(this.getStorageKey(provider), storedKey);
+      localStorage.setItem(this.getMetaKey(provider), JSON.stringify(meta));
+    } catch (error) {
+      throw new SutraError(
+        'Failed to write to localStorage',
+        'STORAGE_ERROR',
+        { cause: error instanceof Error ? error : undefined }
+      );
+    }
   }
 
   async get(provider: ProviderName): Promise<string | null> {
-    const storedKey = localStorage.getItem(this.getStorageKey(provider));
+    let storedKey: string | null = null;
+    try {
+      storedKey = localStorage.getItem(this.getStorageKey(provider));
+    } catch {
+      return null;
+    }
+
     if (!storedKey) return null;
 
     // Update last used
@@ -183,12 +198,20 @@ export class LocalStorageImpl implements IKeyStorage {
   }
 
   async remove(provider: ProviderName): Promise<void> {
-    localStorage.removeItem(this.getStorageKey(provider));
-    localStorage.removeItem(this.getMetaKey(provider));
+    try {
+      localStorage.removeItem(this.getStorageKey(provider));
+      localStorage.removeItem(this.getMetaKey(provider));
+    } catch {
+      // Ignore errors during removal
+    }
   }
 
   async has(provider: ProviderName): Promise<boolean> {
-    return localStorage.getItem(this.getStorageKey(provider)) !== null;
+    try {
+      return localStorage.getItem(this.getStorageKey(provider)) !== null;
+    } catch {
+      return false;
+    }
   }
 
   async clear(): Promise<void> {
@@ -200,19 +223,24 @@ export class LocalStorageImpl implements IKeyStorage {
 
   async list(): Promise<ProviderName[]> {
     const providers: ProviderName[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(this.prefix) && !key.endsWith('_meta')) {
-        providers.push(key.slice(this.prefix.length) as ProviderName);
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(this.prefix) && !key.endsWith('_meta')) {
+          providers.push(key.slice(this.prefix.length) as ProviderName);
+        }
       }
+    } catch {
+      // Return empty list if storage access fails
+      return [];
     }
     return providers;
   }
 
   async getMeta(provider: ProviderName): Promise<StoredKeyMeta | null> {
-    const metaStr = localStorage.getItem(this.getMetaKey(provider));
-    if (!metaStr) return null;
     try {
+      const metaStr = localStorage.getItem(this.getMetaKey(provider));
+      if (!metaStr) return null;
       return JSON.parse(metaStr);
     } catch {
       return null;
@@ -242,6 +270,7 @@ export class SessionStorageImpl implements IKeyStorage {
 
   private isAvailable(): boolean {
     try {
+      if (typeof sessionStorage === 'undefined') return false;
       const test = '__sutra_test__';
       sessionStorage.setItem(test, test);
       sessionStorage.removeItem(test);
@@ -279,12 +308,26 @@ export class SessionStorageImpl implements IKeyStorage {
       encrypted: this.encrypt,
     };
 
-    sessionStorage.setItem(this.getStorageKey(provider), storedKey);
-    sessionStorage.setItem(this.getMetaKey(provider), JSON.stringify(meta));
+    try {
+      sessionStorage.setItem(this.getStorageKey(provider), storedKey);
+      sessionStorage.setItem(this.getMetaKey(provider), JSON.stringify(meta));
+    } catch (error) {
+      throw new SutraError(
+        'Failed to write to sessionStorage',
+        'STORAGE_ERROR',
+        { cause: error instanceof Error ? error : undefined }
+      );
+    }
   }
 
   async get(provider: ProviderName): Promise<string | null> {
-    const storedKey = sessionStorage.getItem(this.getStorageKey(provider));
+    let storedKey: string | null = null;
+    try {
+      storedKey = sessionStorage.getItem(this.getStorageKey(provider));
+    } catch {
+      return null;
+    }
+
     if (!storedKey) return null;
 
     // Update last used
@@ -307,12 +350,20 @@ export class SessionStorageImpl implements IKeyStorage {
   }
 
   async remove(provider: ProviderName): Promise<void> {
-    sessionStorage.removeItem(this.getStorageKey(provider));
-    sessionStorage.removeItem(this.getMetaKey(provider));
+    try {
+      sessionStorage.removeItem(this.getStorageKey(provider));
+      sessionStorage.removeItem(this.getMetaKey(provider));
+    } catch {
+      // Ignore errors
+    }
   }
 
   async has(provider: ProviderName): Promise<boolean> {
-    return sessionStorage.getItem(this.getStorageKey(provider)) !== null;
+    try {
+      return sessionStorage.getItem(this.getStorageKey(provider)) !== null;
+    } catch {
+      return false;
+    }
   }
 
   async clear(): Promise<void> {
@@ -324,19 +375,23 @@ export class SessionStorageImpl implements IKeyStorage {
 
   async list(): Promise<ProviderName[]> {
     const providers: ProviderName[] = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key?.startsWith(this.prefix) && !key.endsWith('_meta')) {
-        providers.push(key.slice(this.prefix.length) as ProviderName);
+    try {
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key?.startsWith(this.prefix) && !key.endsWith('_meta')) {
+          providers.push(key.slice(this.prefix.length) as ProviderName);
+        }
       }
+    } catch {
+      return [];
     }
     return providers;
   }
 
   async getMeta(provider: ProviderName): Promise<StoredKeyMeta | null> {
-    const metaStr = sessionStorage.getItem(this.getMetaKey(provider));
-    if (!metaStr) return null;
     try {
+      const metaStr = sessionStorage.getItem(this.getMetaKey(provider));
+      if (!metaStr) return null;
       return JSON.parse(metaStr);
     } catch {
       return null;
@@ -554,9 +609,19 @@ export function createStorage(options: KeyStorageOptions): IKeyStorage {
     case 'memory':
       return new MemoryStorage({ encrypt: options.encrypt });
     case 'localStorage':
-      return new LocalStorageImpl(storageOptions);
+      try {
+        return new LocalStorageImpl(storageOptions);
+      } catch {
+        console.warn('localStorage is not available, falling back to MemoryStorage');
+        return new MemoryStorage({ encrypt: options.encrypt });
+      }
     case 'sessionStorage':
-      return new SessionStorageImpl(storageOptions);
+      try {
+        return new SessionStorageImpl(storageOptions);
+      } catch {
+        console.warn('sessionStorage is not available, falling back to MemoryStorage');
+        return new MemoryStorage({ encrypt: options.encrypt });
+      }
     case 'indexedDB':
       return new IndexedDBStorage(storageOptions);
     default:

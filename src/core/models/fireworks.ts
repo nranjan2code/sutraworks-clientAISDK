@@ -1,0 +1,40 @@
+import type { ExtendedModelInfo } from '../../types';
+
+export const fireworksModels: ExtendedModelInfo[] = [
+    {
+        id: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
+        name: 'Llama 3.3 70B',
+        provider: 'fireworks',
+        type: 'chat',
+        context_window: 128000,
+        max_output_tokens: 16384,
+        supports_vision: false,
+        supports_tools: true,
+        supports_streaming: true,
+        pricing: { input: 0.9, output: 0.9 },
+    },
+    {
+        id: 'accounts/fireworks/models/llama-v3p2-90b-vision-instruct',
+        name: 'Llama 3.2 90B Vision',
+        provider: 'fireworks',
+        type: 'chat',
+        context_window: 128000,
+        max_output_tokens: 16384,
+        supports_vision: true,
+        supports_tools: true,
+        supports_streaming: true,
+        pricing: { input: 0.9, output: 0.9 },
+    },
+    {
+        id: 'accounts/fireworks/models/mixtral-8x22b-instruct',
+        name: 'Mixtral 8x22B',
+        provider: 'fireworks',
+        type: 'chat',
+        context_window: 65536,
+        max_output_tokens: 8192,
+        supports_vision: false,
+        supports_tools: true,
+        supports_streaming: true,
+        pricing: { input: 0.9, output: 0.9 },
+    },
+];

@@ -5,7 +5,10 @@
 
 /**
  * Simple token estimation (approximation)
- * For accurate counts, use provider-specific tokenizers
+ * 
+ * WARNING: This is a client-side heuristic (approx 4 chars/token).
+ * It is NOT billing-grade accuracy. Actual usage may vary by +/- 20%.
+ * For precise counts, rely on the provider's API response usage data.
  */
 export function estimateTokens(text: string): number {
   if (!text) return 0;

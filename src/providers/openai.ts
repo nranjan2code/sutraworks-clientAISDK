@@ -149,6 +149,8 @@ export class OpenAIProvider extends BaseProvider {
     this.emitStreamStart(requestId, request.model);
 
     let chunkCount = 0;
+    let abortHandler: (() => void) | null = null;
+    let streamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
     try {
       const response = await this.makeRequest<Response>('/chat/completions', {
@@ -162,7 +164,33 @@ export class OpenAIProvider extends BaseProvider {
         throw new Error('No response body');
       }
 
-      for await (const chunk of parseJSONStream<OpenAIStreamChunk>(body)) {
+      // Track reader for cleanup
+      streamReader = body.getReader();
+
+      // Setup abort handler for graceful cleanup
+      if (request.signal) {
+        abortHandler = () => {
+          streamReader?.cancel().catch(() => { }); // Ignore cancel errors
+        };
+        request.signal.addEventListener('abort', abortHandler);
+      }
+
+      // Re-wrap reader as stream for parser (parser will use its own reader)
+      const readerStream = new ReadableStream({
+        async pull(controller) {
+          const { done, value } = await streamReader!.read();
+          if (done) {
+            controller.close();
+          } else {
+            controller.enqueue(value);
+          }
+        },
+        cancel() {
+          streamReader?.cancel().catch(() => { });
+        }
+      });
+
+      for await (const chunk of parseJSONStream<OpenAIStreamChunk>(readerStream)) {
         chunkCount++;
         yield this.transformStreamChunk(chunk);
       }
@@ -171,6 +199,18 @@ export class OpenAIProvider extends BaseProvider {
     } catch (error) {
       this.emitStreamError(requestId, request.model, error as Error);
       throw error;
+    } finally {
+      // Always cleanup: remove abort listener and cancel reader
+      if (abortHandler && request.signal) {
+        request.signal.removeEventListener('abort', abortHandler);
+      }
+      if (streamReader) {
+        try {
+          await streamReader.cancel();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     }
   }
 

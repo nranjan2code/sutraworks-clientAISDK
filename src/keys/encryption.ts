@@ -209,17 +209,23 @@ export class Encryption {
   }
 
   /**
-   * Decrypt with password
+   * Decrypt data with password
    */
   static async decryptWithPassword(encryptedData: string, password: string): Promise<string> {
+    this.ensureAvailable();
+
     const parts = encryptedData.split('|');
 
-    // Support legacy format (salt:encrypted)
-    if (parts.length === 2) {
-      const [saltBase64, encrypted] = parts;
-      const salt = this.base64ToArrayBuffer(saltBase64);
-      const { key } = await this.deriveKey(password, salt, 100000); // Legacy iterations
-      return this.decrypt(encrypted, key);
+    // Support legacy format (salt:encrypted) with : separator
+    if (parts.length === 1 && encryptedData.includes(':')) {
+      const colonParts = encryptedData.split(':');
+      if (colonParts.length >= 2) {
+        const [saltBase64, ...rest] = colonParts;
+        const encrypted = rest.join(':');
+        const salt = this.base64ToArrayBuffer(saltBase64);
+        const { key } = await this.deriveKey(password, salt, 100000); // Legacy iterations
+        return this.decrypt(encrypted, key);
+      }
     }
 
     if (parts.length !== 4) {
@@ -236,6 +242,27 @@ export class Encryption {
     const salt = this.base64ToArrayBuffer(saltBase64);
     const { key } = await this.deriveKey(password, salt, iterations);
     return this.decrypt(encrypted, key);
+  }
+
+  /**
+   * Re-encrypt data with a new password (or same password with new salt)
+   * Useful for salt rotation and key migration
+   * @param encryptedData - Data encrypted with oldPassword
+   * @param oldPassword - Current password
+   * @param newPassword - New password (can be same as old for salt rotation)
+   * @param newIterations - Optional new iteration count
+   * @returns Newly encrypted data with fresh salt
+   */
+  static async reEncryptWithNewPassword(
+    encryptedData: string,
+    oldPassword: string,
+    newPassword: string,
+    newIterations?: number
+  ): Promise<string> {
+    // Decrypt with old password
+    const plaintext = await this.decryptWithPassword(encryptedData, oldPassword);
+    // Re-encrypt with new password (generates new salt automatically)
+    return this.encryptWithPassword(plaintext, newPassword, newIterations);
   }
 
   /**

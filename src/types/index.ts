@@ -335,6 +335,20 @@ export interface ModelInfo {
   deprecated?: string;
 }
 
+/** Pricing information for a model */
+export interface ModelPricing {
+  input: number;
+  output: number;
+}
+
+/** Extended model information including pricing and aliases */
+export interface ExtendedModelInfo extends ModelInfo {
+  pricing?: ModelPricing;
+  aliases?: string[];
+  description?: string;
+  releaseDate?: string;
+}
+
 // ============================================================================
 // Key Management Types
 // ============================================================================

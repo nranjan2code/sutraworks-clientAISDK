@@ -21,7 +21,7 @@ class MockProvider extends BaseProvider {
   get name(): ProviderName {
     return 'openai' as ProviderName; // Use a valid provider name for testing
   }
-  
+
   async chat(request: ChatRequest): Promise<ChatResponse> {
     return {
       id: 'mock-id',
@@ -37,7 +37,7 @@ class MockProvider extends BaseProvider {
       usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
     };
   }
-  
+
   async *chatStream(request: ChatRequest): AsyncIterable<ChatStreamDelta> {
     yield {
       id: 'mock-id',
@@ -52,11 +52,11 @@ class MockProvider extends BaseProvider {
       }],
     };
   }
-  
+
   async listModels(): Promise<ModelInfo[]> {
     return [{ id: 'mock-model', name: 'Mock Model', provider: 'openai' as ProviderName, type: 'chat' }];
   }
-  
+
   supports(feature: 'streaming' | 'embeddings' | 'vision' | 'tools'): boolean {
     return feature === 'streaming';
   }
@@ -156,7 +156,7 @@ describe('ProviderRegistry', () => {
     it('should unregister custom provider', () => {
       registry.registerProvider('custom' as any, MockProvider);
       expect(registry.hasProvider('custom' as any)).toBe(true);
-      
+
       const removed = registry.unregisterProvider('custom' as any);
       expect(removed).toBe(true);
       expect(registry.hasProvider('custom' as any)).toBe(false);
@@ -205,7 +205,7 @@ describe('ProviderRegistry', () => {
       registry.recordSuccess('openai', 100);
       const metrics = registry.getMetrics('openai');
       expect(metrics?.successes).toBeGreaterThan(0);
-      expect(metrics?.totalLatency).toBeGreaterThan(0);
+      expect(metrics?.latencyWindow.length).toBeGreaterThan(0);
     });
 
     it('should record failure', () => {
@@ -221,7 +221,9 @@ describe('ProviderRegistry', () => {
         requests: expect.any(Number),
         successes: expect.any(Number),
         failures: expect.any(Number),
-        totalLatency: expect.any(Number),
+        latencyWindow: expect.any(Array),
+        windowSize: expect.any(Number),
+        windowTtl: expect.any(Number),
       });
     });
 
@@ -230,7 +232,7 @@ describe('ProviderRegistry', () => {
       registry.resetMetrics('openai');
       const metrics = registry.getMetrics('openai');
       expect(metrics?.successes).toBe(0);
-      expect(metrics?.totalLatency).toBe(0);
+      expect(metrics?.latencyWindow.length).toBe(0);
     });
 
     it('should reset all metrics', () => {
@@ -282,7 +284,7 @@ describe('ProviderRegistry', () => {
           throw new Error('Test failure');
         })
       ).rejects.toThrow('Test failure');
-      
+
       const metrics = registry.getMetrics('openai');
       expect(metrics?.failures).toBeGreaterThan(0);
     });
@@ -294,7 +296,7 @@ describe('ProviderRegistry', () => {
         mockGetApiKey,
         { useCircuitBreaker: false }
       );
-      
+
       const result = await noCircuitRegistry.executeWithCircuitBreaker(
         'openai',
         async () => 'success'

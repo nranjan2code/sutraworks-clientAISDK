@@ -1,0 +1,40 @@
+import type { ExtendedModelInfo } from '../../types';
+
+export const togetherModels: ExtendedModelInfo[] = [
+    {
+        id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+        name: 'Llama 3.3 70B Instruct Turbo',
+        provider: 'together',
+        type: 'chat',
+        context_window: 128000,
+        max_output_tokens: 8192,
+        supports_vision: false,
+        supports_tools: true,
+        supports_streaming: true,
+        pricing: { input: 0.88, output: 0.88 },
+    },
+    {
+        id: 'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
+        name: 'Llama 3.2 90B Vision',
+        provider: 'together',
+        type: 'chat',
+        context_window: 128000,
+        max_output_tokens: 8192,
+        supports_vision: true,
+        supports_tools: true,
+        supports_streaming: true,
+        pricing: { input: 1.2, output: 1.2 },
+    },
+    {
+        id: 'Qwen/Qwen2.5-72B-Instruct-Turbo',
+        name: 'Qwen 2.5 72B',
+        provider: 'together',
+        type: 'chat',
+        context_window: 32768,
+        max_output_tokens: 8192,
+        supports_vision: false,
+        supports_tools: true,
+        supports_streaming: true,
+        pricing: { input: 1.2, output: 1.2 },
+    },
+];

@@ -116,6 +116,8 @@ export class AnthropicProvider extends BaseProvider {
     let chunkCount = 0;
     let messageId = '';
     let model = request.model;
+    let abortHandler: (() => void) | null = null;
+    let streamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
     try {
       const response = await this.makeRequest<Response>('/messages', {
@@ -129,7 +131,33 @@ export class AnthropicProvider extends BaseProvider {
         throw new Error('No response body');
       }
 
-      for await (const sseEvent of parseSSEStream(body)) {
+      // Track reader for cleanup
+      streamReader = body.getReader();
+
+      // Setup abort handler for graceful cleanup
+      if (request.signal) {
+        abortHandler = () => {
+          streamReader?.cancel().catch(() => { });
+        };
+        request.signal.addEventListener('abort', abortHandler);
+      }
+
+      // Re-wrap reader as stream for parser
+      const readerStream = new ReadableStream({
+        async pull(controller) {
+          const { done, value } = await streamReader!.read();
+          if (done) {
+            controller.close();
+          } else {
+            controller.enqueue(value);
+          }
+        },
+        cancel() {
+          streamReader?.cancel().catch(() => { });
+        }
+      });
+
+      for await (const sseEvent of parseSSEStream(readerStream)) {
         const event = parseSSEData<AnthropicStreamEvent>(sseEvent.data);
         if (!event) continue;
 
@@ -156,6 +184,18 @@ export class AnthropicProvider extends BaseProvider {
     } catch (error) {
       this.emitStreamError(requestId, request.model, error as Error);
       throw error;
+    } finally {
+      // Always cleanup: remove abort listener and cancel reader
+      if (abortHandler && request.signal) {
+        request.signal.removeEventListener('abort', abortHandler);
+      }
+      if (streamReader) {
+        try {
+          await streamReader.cancel();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     }
   }
 
@@ -389,10 +429,10 @@ export class AnthropicProvider extends BaseProvider {
       ],
       usage: event.usage
         ? {
-            prompt_tokens: 0,
-            completion_tokens: event.usage.output_tokens,
-            total_tokens: event.usage.output_tokens,
-          }
+          prompt_tokens: 0,
+          completion_tokens: event.usage.output_tokens,
+          total_tokens: event.usage.output_tokens,
+        }
         : undefined,
     };
   }
