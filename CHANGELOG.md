@@ -5,6 +5,47 @@ All notable changes to the Sutraworks Client AI SDK will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-01-13
+
+### Added
+
+#### Security Enhancements
+- **Provider-Specific Key Validation**: Added format validation for all providers
+  - OpenAI: `sk-` prefix validation
+  - Anthropic: `sk-ant-` prefix validation
+  - Google: `AIza` prefix validation
+  - Groq: `gsk_` prefix validation
+  - And 8 more providers with specific patterns
+  - `skipFormatCheck` option for custom providers
+
+- **Key Rotation Support**: New `rotateKey()` method
+  - Secure key updates with fingerprint tracking
+  - Validates new key before rotation
+  - Emits `key:rotate` event
+
+- **Audit Event System**: New events for security monitoring
+  - `key:error` - Key operation failures with stack trace
+  - `key:rotate` - Key rotation events
+  - `key:validate` - Key validation results (pass/fail)
+  - `security:warning` - Security configuration warnings
+
+- **Enhanced Error Handling**: Replaced silent error swallowing with event emission
+  - All key operation failures now emit `key:error` events
+  - Fallback storage failures are properly logged
+
+### Changed
+
+- **Concurrent Access Tests**: Now use true concurrent operations with `Promise.all()`
+- **Test Keys**: Updated to use valid provider-specific formats
+- **Test Count**: 551 tests (up from 516)
+
+### Fixed
+
+- Silent error swallowing in key manager's fallback storage operations
+- Misleading "concurrent access" tests that were actually sequential
+
+---
+
 ## [2.0.1] - 2026-01-10
 
 ### Fixed

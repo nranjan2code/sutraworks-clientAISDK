@@ -1,5 +1,5 @@
 /**
- * Sutraworks Client AI SDK v2.0
+ * Sutraworks Client AI SDK v2.0.2
  * Universal client-side AI SDK with BYOK (Bring Your Own Key) architecture
  * 
  * Features:
@@ -12,10 +12,12 @@
  * - Token counting and cost estimation
  * - Comprehensive caching with SHA-256 hashing
  * - OWASP 2024 compliant encryption
+ * - Provider-specific key validation
+ * - Key rotation with audit trail
  *
  * @packageDocumentation
  * @module @sutraworks/client-ai-sdk
- * @version 2.0.0
+ * @version 2.0.2
  */
 
 // Core modules
@@ -37,6 +39,14 @@ export {
   IndexedDBStorage,
 } from './keys/storage';
 export type { IKeyStorage } from './keys/storage';
+export {
+  validateKey,
+  isValidKeyFormat,
+  getKeyFormatDescription,
+  detectProviderFromKey,
+  KEY_PATTERNS,
+} from './keys/validation';
+export type { KeyValidationResult, KeyValidationOptions } from './keys/validation';
 
 // Providers
 export { BaseProvider } from './providers/base';
@@ -199,7 +209,7 @@ export type {
 export { SutraError } from './types';
 
 // Version
-export const VERSION = '2.0.0';
+export const VERSION = '2.0.2';
 
 // Default export
 import { SutraAI } from './core/client';

@@ -1,8 +1,8 @@
 # Architecture Guide
 
-This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.0.0).
+This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.0.1).
 
-> **Test Stats**: 516 tests | 81% coverage | 16 test files
+> **Test Stats**: 551 tests | 81% coverage | 17 test files
 
 ## System Overview
 
@@ -51,7 +51,10 @@ Manages the lifecycle of AI provider instances.
 Handles the secure storage and retrieval of API keys.
 - **Storage Abstraction**: Supports `Memory`, `LocalStorage`, `SessionStorage`, and `IndexedDB`.
 - **Encryption**: Uses AES-256-GCM to encrypt keys at rest using a user-provided password or ephemeral keys.
+- **Provider-Specific Validation**: Validates key formats for each provider (OpenAI `sk-`, Anthropic `sk-ant-`, etc.).
+- **Key Rotation**: Secure key rotation via `rotateKey()` with fingerprint tracking.
 - **Race Condition Protection**: Uses an internal mutex to prevent race conditions during key reads/writes in async environments.
+- **Audit Events**: Emits events for key operations (`key:set`, `key:remove`, `key:rotate`, `key:validate`, `key:error`).
 
 ## Request Flow
 
@@ -170,7 +173,11 @@ src/
 │   └── registry.ts       # Provider registry + circuit breaker
 ├── providers/            # 12 provider adapters
 ├── middleware/           # Request/response pipeline
-├── keys/                 # Encryption + storage
+├── keys/                 # Key management & encryption
+│   ├── manager.ts        # Key manager with mutex, rotation
+│   ├── validation.ts     # Provider-specific key validation
+│   ├── encryption.ts     # AES-256-GCM encryption
+│   └── storage.ts        # Storage adapters
 ├── streaming/            # SSE parsing + collection
-└── utils/                # Cache, retry, errors, tokens
+└── utils/                # Cache, retry, errors, tokens, events
 ```

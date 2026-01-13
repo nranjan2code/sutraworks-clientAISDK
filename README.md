@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version 2.0.0" />
+  <img src="https://img.shields.io/badge/version-2.0.1-blue.svg" alt="Version 2.0.1" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License" />
-  <img src="https://img.shields.io/badge/tests-516%20passing-brightgreen.svg" alt="Tests Passing" />
+  <img src="https://img.shields.io/badge/tests-551%20passing-brightgreen.svg" alt="Tests Passing" />
   <img src="https://img.shields.io/badge/coverage-81%25-brightgreen.svg" alt="Coverage" />
   <img src="https://img.shields.io/badge/zero-dependencies-orange.svg" alt="Zero Dependencies" />
 </p>
@@ -53,6 +53,8 @@ Traditional AI integrations require sending your API keys to a backend server, c
 - **Zero-trust server model** — keys never leave the browser
 - **OWASP 2024 compliant** encryption (600k PBKDF2, SHA-512)
 - **AES-256-GCM** authenticated encryption
+- **Provider-specific key validation** — format checks for all providers
+- **Key rotation support** — secure key updates with audit trail
 - **Auto-clear timers** — keys can expire automatically
 - **Encrypted storage** options (memory, localStorage, IndexedDB)
 - **Constant-time comparison** to prevent timing attacks
@@ -242,8 +244,11 @@ const ai = new SutraAI({
 | 🔐 **Key Derivation** | PBKDF2 with 600,000 iterations (OWASP 2024) |
 | 🔐 **Hashing** | SHA-512 for key derivation |
 | 🔐 **Encryption** | AES-256-GCM authenticated encryption |
+| 🔐 **Key Validation** | Provider-specific format patterns (OpenAI `sk-`, etc.) |
+| 🔐 **Key Rotation** | Secure key updates with fingerprint tracking |
 | 🔐 **Timing Safety** | Constant-time comparison to prevent attacks |
 | 🔐 **Memory Safety** | Secure wiping of sensitive data |
+| 🔐 **Audit Events** | `key:set`, `key:remove`, `key:rotate`, `key:validate` |
 | 🔐 **Key Fingerprinting** | Verify keys without exposure |
 
 ---
@@ -543,7 +548,7 @@ src/
 # Install dependencies
 npm install
 
-# Run tests (516 tests, 81% coverage)
+# Run tests (551 tests, 81% coverage)
 npm test
 
 # Run tests with coverage report
@@ -605,6 +610,7 @@ npm run example:ollama
 | `removeMiddleware(name)` | Remove middleware |
 | `registerTemplate(template)` | Register prompt template |
 | `executeTemplate(name, vars)` | Execute template |
+| `rotateKey(provider, newKey)` | Rotate API key with audit trail |
 | `getUsageStats()` | Get usage statistics |
 | `getUsageByModel()` | Get usage by model |
 | `setCache(enabled, options?)` | Configure caching |

@@ -11,7 +11,9 @@ import type { ChatRequest } from '../types';
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-const TEST_API_KEY = 'sk-test-key-12345';
+// Valid test keys that match provider format patterns
+const TEST_API_KEY = 'sk-test1234567890abcdefghijklmnopqrstuvwxyz';
+const TEST_ANTHROPIC_KEY = 'sk-ant-test1234567890abcdefghijklmnopqrstuvwxyzabc';
 
 function createTestRequest(overrides: Partial<ChatRequest> = {}): ChatRequest {
   return {
@@ -94,7 +96,7 @@ describe('SutraAI Client', () => {
     it('should set multiple keys', async () => {
       await ai.setKeys({
         openai: TEST_API_KEY,
-        anthropic: 'sk-ant-test-12345',
+        anthropic: TEST_ANTHROPIC_KEY,
       });
       expect(await ai.hasKey('openai')).toBe(true);
       expect(await ai.hasKey('anthropic')).toBe(true);
@@ -103,7 +105,7 @@ describe('SutraAI Client', () => {
     it('should clear all keys', async () => {
       await ai.setKeys({
         openai: TEST_API_KEY,
-        anthropic: 'sk-ant-test-12345',
+        anthropic: TEST_ANTHROPIC_KEY,
       });
       await ai.clearKeys();
       expect(await ai.hasKey('openai')).toBe(false);
@@ -113,7 +115,7 @@ describe('SutraAI Client', () => {
     it('should list stored keys', async () => {
       await ai.setKeys({
         openai: TEST_API_KEY,
-        anthropic: 'sk-ant-test-12345',
+        anthropic: TEST_ANTHROPIC_KEY,
       });
       const stored = await ai.listStoredKeys();
       expect(stored).toContain('openai');

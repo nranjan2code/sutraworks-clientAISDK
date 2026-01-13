@@ -9,6 +9,17 @@ import { MemoryStorage } from './storage';
 import { EventEmitter } from '../utils/events';
 import { SutraError } from '../types';
 
+// Valid test keys that match provider format patterns
+const TEST_KEYS = {
+  openai: 'sk-test1234567890abcdefghijklmnopqrstuvwxyz',
+  anthropic: 'sk-ant-test1234567890abcdefghijklmnopqrstuvwxyzabc',
+  google: 'AIzaTestKey1234567890abcdefghijklmnop',
+  groq: 'gsk_test1234567890abcdefghijklmnopqrstuvwxyzabcdefghijk',
+};
+
+// Option to skip format validation in tests (for testing manager logic, not validation)
+const SKIP_FORMAT = { skipFormatCheck: true };
+
 describe('KeyManager', () => {
   let manager: KeyManager;
   let events: EventEmitter;
@@ -24,7 +35,7 @@ describe('KeyManager', () => {
 
   describe('setKey', () => {
     it('should store a valid API key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       expect(await manager.hasKey('openai')).toBe(true);
     });
 
@@ -41,19 +52,21 @@ describe('KeyManager', () => {
     });
 
     it('should overwrite existing key for same provider', async () => {
-      await manager.setKey('openai', 'sk-first-key-12345');
-      await manager.setKey('openai', 'sk-second-key-12345');
+      const key1 = 'sk-first1234567890abcdefghijklmnopqrst';
+      const key2 = 'sk-second123456789abcdefghijklmnopqrst';
+      await manager.setKey('openai', key1);
+      await manager.setKey('openai', key2);
 
       const key = await manager.getKey('openai');
-      expect(key).toBe('sk-second-key-12345');
+      expect(key).toBe(key2);
     });
   });
 
   describe('setKeys', () => {
     it('should set multiple keys sequentially', async () => {
       // setKeys runs operations sequentially internally
-      await manager.setKey('openai', 'sk-openai-key-12345');
-      await manager.setKey('anthropic', 'sk-anthropic-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
+      await manager.setKey('anthropic', TEST_KEYS.anthropic);
 
       expect(await manager.hasKey('openai')).toBe(true);
       expect(await manager.hasKey('anthropic')).toBe(true);
@@ -62,9 +75,9 @@ describe('KeyManager', () => {
 
   describe('getKey', () => {
     it('should return stored key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       const key = await manager.getKey('openai');
-      expect(key).toBe('sk-test-key-12345');
+      expect(key).toBe(TEST_KEYS.openai);
     });
 
     it('should return null for non-existent key', async () => {
@@ -75,9 +88,9 @@ describe('KeyManager', () => {
 
   describe('requireKey', () => {
     it('should return key when it exists', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       const key = await manager.requireKey('openai');
-      expect(key).toBe('sk-test-key-12345');
+      expect(key).toBe(TEST_KEYS.openai);
     });
 
     it('should throw for non-existent key', async () => {
@@ -96,7 +109,7 @@ describe('KeyManager', () => {
 
   describe('hasKey', () => {
     it('should return true for existing key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       expect(await manager.hasKey('openai')).toBe(true);
     });
 
@@ -107,7 +120,7 @@ describe('KeyManager', () => {
 
   describe('removeKey', () => {
     it('should remove existing key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       await manager.removeKey('openai');
       expect(await manager.hasKey('openai')).toBe(false);
     });
@@ -119,8 +132,8 @@ describe('KeyManager', () => {
 
   describe('clearAllKeys', () => {
     it('should remove all keys', async () => {
-      await manager.setKey('openai', 'sk-openai-key-12345');
-      await manager.setKey('anthropic', 'sk-anthropic-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
+      await manager.setKey('anthropic', TEST_KEYS.anthropic);
 
       await manager.clearAllKeys();
 
@@ -131,8 +144,8 @@ describe('KeyManager', () => {
 
   describe('listProviders', () => {
     it('should return list of providers with keys', async () => {
-      await manager.setKey('openai', 'sk-openai-key-12345');
-      await manager.setKey('anthropic', 'sk-anthropic-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
+      await manager.setKey('anthropic', TEST_KEYS.anthropic);
 
       const providers = await manager.listProviders();
 
@@ -148,7 +161,7 @@ describe('KeyManager', () => {
 
   describe('destroy', () => {
     it('should clear all keys on destroy', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       await manager.destroy();
 
       // Create new manager with same events
@@ -159,29 +172,43 @@ describe('KeyManager', () => {
   });
 
   describe('concurrent access', () => {
-    it('should handle sequential setKey operations safely', async () => {
-      // Run setKey operations sequentially 
-      await manager.setKey('provider1', 'sk-key-one-12345');
-      await manager.setKey('provider2', 'sk-key-two-12345');
-      await manager.setKey('provider3', 'sk-key-three-12345');
+    it('should handle concurrent setKey operations safely', async () => {
+      // Run concurrent setKey operations using Promise.all
+      const key1 = 'sk-key1-1234567890abcdefghijklmnopqrst';
+      const key2 = 'sk-key2-1234567890abcdefghijklmnopqrst';
+      const key3 = 'sk-key3-1234567890abcdefghijklmnopqrst';
 
-      expect(await manager.hasKey('provider1')).toBe(true);
-      expect(await manager.hasKey('provider2')).toBe(true);
-      expect(await manager.hasKey('provider3')).toBe(true);
+      await Promise.all([
+        manager.setKey('openai', key1),
+        manager.setKey('anthropic', TEST_KEYS.anthropic),
+        manager.setKey('google', TEST_KEYS.google),
+      ]);
+
+      expect(await manager.hasKey('openai')).toBe(true);
+      expect(await manager.hasKey('anthropic')).toBe(true);
+      expect(await manager.hasKey('google')).toBe(true);
     });
 
-    it('should handle overwriting keys correctly', async () => {
-      await manager.setKey('openai', 'sk-initial-key-12345');
-      await manager.setKey('openai', 'sk-updated-key-12345');
+    it('should handle concurrent operations on same key', async () => {
+      const key1 = 'sk-initial123456789abcdefghijklmnopqr';
+      const key2 = 'sk-updated123456789abcdefghijklmnopqr';
 
+      // Run concurrent operations on same key
+      await Promise.all([
+        manager.setKey('openai', key1),
+        manager.setKey('openai', key2),
+      ]);
+
+      // Key should exist (one of the values)
       const key = await manager.getKey('openai');
-      expect(key).toBe('sk-updated-key-12345');
+      expect(key).toBeDefined();
+      expect([key1, key2]).toContain(key);
     });
   });
 
   describe('key fingerprint', () => {
     it('should generate fingerprint for stored key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       const fingerprint = await manager.getKeyFingerprint('openai');
       expect(fingerprint).toBeDefined();
       expect(typeof fingerprint).toBe('string');
@@ -195,19 +222,21 @@ describe('KeyManager', () => {
 
   describe('key verification', () => {
     it('should verify matching key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
-      const isValid = await manager.verifyKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
+      const isValid = await manager.verifyKey('openai', TEST_KEYS.openai);
       expect(isValid).toBe(true);
     });
 
     it('should reject non-matching key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
-      const isValid = await manager.verifyKey('openai', 'sk-wrong-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
+      const wrongKey = 'sk-wrong1234567890abcdefghijklmnopqrst';
+      const isValid = await manager.verifyKey('openai', wrongKey);
       expect(isValid).toBe(false);
     });
 
     it('should return false for non-existent provider', async () => {
-      const isValid = await manager.verifyKey('openai', 'sk-any-key-12345');
+      const anyKey = 'sk-anykey1234567890abcdefghijklmnopqr';
+      const isValid = await manager.verifyKey('openai', anyKey);
       expect(isValid).toBe(false);
     });
   });
@@ -215,9 +244,9 @@ describe('KeyManager', () => {
   describe('setKeys (batch)', () => {
     it('should set multiple keys at once', async () => {
       await manager.setKeys({
-        openai: 'sk-openai-key-12345',
-        anthropic: 'sk-anthropic-key-12345',
-        google: 'google-api-key-12345',
+        openai: TEST_KEYS.openai,
+        anthropic: TEST_KEYS.anthropic,
+        google: TEST_KEYS.google,
       });
 
       expect(await manager.hasKey('openai')).toBe(true);
@@ -227,7 +256,7 @@ describe('KeyManager', () => {
 
     it('should skip null or undefined keys', async () => {
       await manager.setKeys({
-        openai: 'sk-openai-key-12345',
+        openai: TEST_KEYS.openai,
         anthropic: null as unknown as string,
         google: undefined as unknown as string,
       });
@@ -244,7 +273,7 @@ describe('KeyManager', () => {
 
   describe('getKeyMeta', () => {
     it('should return metadata for stored key', async () => {
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       const meta = await manager.getKeyMeta('openai');
 
       expect(meta).not.toBeNull();
@@ -268,7 +297,7 @@ describe('KeyManager', () => {
         autoClearAfter: 1000, // 1 second
       }, events);
 
-      await timedManager.setKey('openai', 'sk-test-key-12345');
+      await timedManager.setKey('openai', TEST_KEYS.openai);
       expect(await timedManager.hasKey('openai')).toBe(true);
 
       // Advance time past auto-clear
@@ -291,13 +320,16 @@ describe('KeyManager', () => {
         autoClearAfter: 1000,
       }, events);
 
-      await timedManager.setKey('openai', 'sk-test-key-12345');
+      const key1 = 'sk-test1-1234567890abcdefghijklmnopqrs';
+      const key2 = 'sk-newkey1234567890abcdefghijklmnopqr';
+
+      await timedManager.setKey('openai', key1);
 
       // Advance time partially
       vi.advanceTimersByTime(500);
 
       // Update the key (should reset timer)
-      await timedManager.setKey('openai', 'sk-new-key-123456');
+      await timedManager.setKey('openai', key2);
 
       // Advance time past original timeout but before new timeout
       vi.advanceTimersByTime(600);
@@ -322,7 +354,7 @@ describe('KeyManager', () => {
         autoClearAfter: 1000,
       }, events);
 
-      await timedManager.setKey('openai', 'sk-test-key-12345');
+      await timedManager.setKey('openai', TEST_KEYS.openai);
       await timedManager.removeKey('openai');
 
       // Advance time past auto-clear (should not emit event since already removed)
@@ -339,8 +371,8 @@ describe('KeyManager', () => {
 
   describe('updateStorage', () => {
     it('should migrate keys to new storage type', async () => {
-      await manager.setKey('openai', 'sk-openai-key-12345');
-      await manager.setKey('anthropic', 'sk-anthropic-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
+      await manager.setKey('anthropic', TEST_KEYS.anthropic);
 
       // Update to encrypted memory storage
       await manager.updateStorage({
@@ -354,7 +386,7 @@ describe('KeyManager', () => {
 
       // Verify keys are correct
       const openaiKey = await manager.getKey('openai');
-      expect(openaiKey).toBe('sk-openai-key-12345');
+      expect(openaiKey).toBe(TEST_KEYS.openai);
     });
 
     it('should handle update with no existing keys', async () => {
@@ -364,7 +396,7 @@ describe('KeyManager', () => {
       });
 
       // Should not throw and should accept new keys
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       expect(await manager.hasKey('openai')).toBe(true);
     });
   });
@@ -374,7 +406,7 @@ describe('KeyManager', () => {
       const listener = vi.fn();
       events.on('key:set', listener);
 
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
 
       expect(listener).toHaveBeenCalled();
       expect(listener.mock.calls[0][0].provider).toBe('openai');
@@ -384,11 +416,22 @@ describe('KeyManager', () => {
       const listener = vi.fn();
       events.on('key:remove', listener);
 
-      await manager.setKey('openai', 'sk-test-key-12345');
+      await manager.setKey('openai', TEST_KEYS.openai);
       await manager.removeKey('openai');
 
       expect(listener).toHaveBeenCalled();
       expect(listener.mock.calls[0][0].provider).toBe('openai');
+    });
+
+    it('should emit key:validate event when key is validated', async () => {
+      const listener = vi.fn();
+      events.on('key:validate', listener);
+
+      await manager.setKey('openai', TEST_KEYS.openai);
+
+      expect(listener).toHaveBeenCalled();
+      expect(listener.mock.calls[0][0].provider).toBe('openai');
+      expect(listener.mock.calls[0][0].valid).toBe(true);
     });
   });
 });

@@ -44,11 +44,25 @@ When encryption is enabled, the SDK uses:
    - Prevents timing attacks on authentication
 
 4. **Input Validation**
+   - **Provider-specific key format validation** (OpenAI `sk-`, Anthropic `sk-ant-`, etc.)
    - Comprehensive request validation middleware
    - Content sanitization (XSS prevention)
    - Provider response validation
 
-5. **Circuit Breaker Pattern**
+5. **Key Rotation Support**
+   - Secure key rotation with `rotateKey()` method
+   - Fingerprint tracking for audit trails
+   - Validation of new key before committing
+
+6. **Audit Event System**
+   - `key:set` - Key storage events
+   - `key:remove` - Key removal events
+   - `key:rotate` - Key rotation events
+   - `key:validate` - Key validation results
+   - `key:error` - Key operation errors
+   - `security:warning` - Security configuration warnings
+
+7. **Circuit Breaker Pattern**
    - Automatic failure detection
    - Prevents cascade failures
    - Self-healing recovery
@@ -99,6 +113,22 @@ const ai = new SutraAI({
 
 // ✅ DO: Clear keys when no longer needed
 await ai.destroy();
+
+// ✅ DO: Use key rotation for regular key updates
+const result = await ai.rotateKey('openai', 'sk-new-key-...');
+console.log('Old key fingerprint:', result.oldFingerprint);
+console.log('New key fingerprint:', result.newFingerprint);
+
+// ✅ DO: Listen to security events
+ai.on('key:validate', (event) => {
+  if (!event.valid) {
+    console.warn('Key validation failed:', event.reason);
+  }
+});
+
+ai.on('security:warning', (event) => {
+  console.warn('Security warning:', event.message);
+});
 
 // ❌ DON'T: Store keys in plain text in code
 const ai = new SutraAI();

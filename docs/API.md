@@ -164,6 +164,34 @@ const providers = await ai.listStoredKeys();
 
 **Returns:** `Promise<ProviderName[]>`
 
+### `rotateKey(provider, newKey, options?)`
+
+Rotate an API key for a provider with audit trail.
+
+```typescript
+const result = await ai.rotateKey('openai', 'sk-new-key-...');
+console.log('Old fingerprint:', result.oldFingerprint);
+console.log('New fingerprint:', result.newFingerprint);
+
+// Skip format validation for custom providers
+await ai.rotateKey('custom-provider', 'custom-key', { skipFormatCheck: true });
+```
+
+**Parameters:**
+- `provider`: `ProviderName` - Provider identifier
+- `newKey`: `string` - New API key
+- `options`: `KeyValidationOptions` - Optional validation options
+  - `skipFormatCheck`: Skip provider-specific format validation
+  - `strict`: Fail on validation warnings
+  - `allowUnknownProviders`: Allow custom provider names
+
+**Returns:** `Promise<{ oldFingerprint: string | null; newFingerprint: string }>`
+
+**Events Emitted:**
+- `key:validate` - Before storing the new key
+- `key:set` - After storing the new key
+- `key:rotate` - After successful rotation
+
 ### `updateKeyStorage(options)`
 
 Update key storage configuration at runtime.
@@ -179,6 +207,28 @@ await ai.updateKeyStorage({
 - `options`: `Partial<KeyStorageOptions>` - Storage options to update
 
 **Returns:** `Promise<void>`
+
+### Key Validation
+
+The SDK validates API keys based on provider-specific patterns:
+
+| Provider | Expected Format | Min Length |
+|----------|-----------------|------------|
+| OpenAI | `sk-...` | 30 |
+| Anthropic | `sk-ant-...` | 40 |
+| Google | `AIza...` | 35 |
+| Groq | `gsk_...` | 50 |
+| Fireworks | `fw_...` | 24 |
+| Perplexity | `pplx-...` | 50 |
+| xAI | `xai-...` | 30 |
+| Ollama | Any (local) | 0 |
+
+To skip format validation:
+
+```typescript
+await ai.setKey('openai', 'custom-key', { skipFormatCheck: true });
+```
+
 
 ---
 
@@ -1006,6 +1056,29 @@ ai.on('key:set', (event) => {
 
 ai.on('key:remove', (event) => {
   console.log(`Key removed for ${event.provider}`);
+});
+
+ai.on('key:rotate', (event) => {
+  console.log(`Key rotated for ${event.provider}`);
+});
+
+ai.on('key:validate', (event) => {
+  if (!event.valid) {
+    console.warn(`Key validation failed for ${event.provider}: ${event.reason}`);
+  }
+});
+
+ai.on('key:error', (event) => {
+  console.error(`Key operation '${event.operation}' failed for ${event.provider}:`, event.error);
+});
+
+ai.on('key:expired', (event) => {
+  console.log(`Key expired for ${event.provider} (auto-clear)`);
+});
+
+// Security
+ai.on('security:warning', (event) => {
+  console.warn(`Security warning: ${event.message}`);
 });
 
 // Cache

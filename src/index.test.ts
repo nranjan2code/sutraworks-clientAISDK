@@ -18,9 +18,9 @@ import {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Test API keys (at least 10 chars for validation)
-const TEST_KEY_OPENAI = 'sk-test-key-12345';
-const TEST_KEY_ANTHROPIC = 'sk-ant-test-12345';
+// Valid test API keys that match provider format patterns
+const TEST_KEY_OPENAI = 'sk-test1234567890abcdefghijklmnopqrstuvwxyz';
+const TEST_KEY_ANTHROPIC = 'sk-ant-test1234567890abcdefghijklmnopqrstuvwxyzabc';
 
 describe('SutraAI Client', () => {
   let ai: SutraAI;
@@ -232,10 +232,10 @@ describe('SutraAI Client', () => {
         name: 'test-middleware',
         beforeRequest: async (req) => req,
       });
-      
+
       const list = ai.listMiddleware();
       expect(list).toContain('test-middleware');
-      
+
       const removed = ai.removeMiddleware('test-middleware');
       expect(removed).toBe(true);
     });
@@ -245,7 +245,7 @@ describe('SutraAI Client', () => {
     it('should destroy client and prevent further use', async () => {
       const client = new SutraAI();
       await client.destroy();
-      
+
       expect(client.isDestroyed()).toBe(true);
       await expect(client.setKey('openai', TEST_KEY_OPENAI)).rejects.toThrow('Client has been destroyed');
     });

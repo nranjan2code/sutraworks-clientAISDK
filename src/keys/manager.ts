@@ -1,6 +1,6 @@
 /**
  * Key management for Sutraworks Client AI SDK v2.0
- * Enhanced with race condition fixes and fallback storage
+ * Enhanced with race condition fixes, validation, and fallback storage
  * @module keys/manager
  */
 
@@ -9,6 +9,7 @@ import { SutraError } from '../types';
 import { createStorage, IKeyStorage, MemoryStorage } from './storage';
 import { EventEmitter, EventFactory } from '../utils/events';
 import { Encryption } from './encryption';
+import { validateKey, type KeyValidationOptions } from './validation';
 
 /**
  * Simple mutex implementation for async operations
@@ -131,15 +132,37 @@ export class KeyManager {
    * Set an API key for a provider
    * @param provider - Provider identifier
    * @param key - API key (never logged or transmitted)
+   * @param options - Validation options
    */
-  async setKey(provider: ProviderName, key: string): Promise<void> {
-    // Validate key
-    if (!key || typeof key !== 'string') {
-      throw new SutraError('Invalid API key', 'KEY_INVALID', { provider });
+  async setKey(
+    provider: ProviderName,
+    key: string,
+    options: KeyValidationOptions = {}
+  ): Promise<void> {
+    // Validate key using proper validation
+    const validation = validateKey(provider, key, options);
+
+    // Emit validation event
+    this.events.emit(EventFactory.keyValidate(
+      provider,
+      validation.valid,
+      validation.errors.join('; ') || undefined
+    ));
+
+    if (!validation.valid) {
+      const errorMessage = validation.errors.join('; ');
+      throw new SutraError(
+        `Invalid API key for ${provider}: ${errorMessage}`,
+        'KEY_INVALID',
+        { provider, details: validation }
+      );
     }
 
-    if (key.length < 10) {
-      throw new SutraError('API key appears too short', 'KEY_INVALID', { provider });
+    // Emit warnings if any
+    if (validation.warnings.length > 0) {
+      for (const warning of validation.warnings) {
+        this.events.emit(EventFactory.securityWarning(warning, provider));
+      }
     }
 
     // Acquire lock to prevent race conditions
@@ -156,8 +179,13 @@ export class KeyManager {
       if (this.fallbackStorage) {
         try {
           await this.fallbackStorage.set(provider, key);
-        } catch {
-          // Ignore fallback storage errors
+        } catch (error) {
+          // Emit error event instead of silently swallowing
+          this.events.emit(EventFactory.keyError(
+            provider,
+            'set',
+            error instanceof Error ? error : new Error(String(error))
+          ));
         }
       }
 
@@ -191,12 +219,23 @@ export class KeyManager {
       const key = await this.storage.get(provider);
       if (key) return key;
     } catch (error) {
-      // Try fallback storage
+      // Emit error and try fallback storage
+      this.events.emit(EventFactory.keyError(
+        provider,
+        'get',
+        error instanceof Error ? error : new Error(String(error))
+      ));
+
       if (this.fallbackStorage) {
         try {
           return await this.fallbackStorage.get(provider);
-        } catch {
-          // Both failed
+        } catch (fallbackError) {
+          // Both failed - emit error
+          this.events.emit(EventFactory.keyError(
+            provider,
+            'get',
+            fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError))
+          ));
         }
       }
     }
@@ -251,14 +290,19 @@ export class KeyManager {
 
     try {
       this.clearAutoClearTimer(provider);
-      
+
       await this.storage.remove(provider);
-      
+
       if (this.fallbackStorage) {
         try {
           await this.fallbackStorage.remove(provider);
-        } catch {
-          // Ignore fallback errors
+        } catch (error) {
+          // Emit error instead of silently ignoring
+          this.events.emit(EventFactory.keyError(
+            provider,
+            'remove',
+            error instanceof Error ? error : new Error(String(error))
+          ));
         }
       }
 
@@ -377,7 +421,7 @@ export class KeyManager {
     const promises = Object.entries(keys)
       .filter(([, key]) => key)
       .map(([provider, key]) => this.setKey(provider as ProviderName, key as string));
-    
+
     await Promise.all(promises);
   }
 
@@ -452,7 +496,7 @@ export class KeyManager {
   async getKeyFingerprint(provider: ProviderName): Promise<string | null> {
     const key = await this.getKey(provider);
     if (!key) return null;
-    
+
     return Encryption.fingerprint(key);
   }
 
@@ -462,9 +506,40 @@ export class KeyManager {
   async verifyKey(provider: ProviderName, keyToVerify: string): Promise<boolean> {
     const storedKey = await this.getKey(provider);
     if (!storedKey) return false;
-    
+
     // Use constant-time comparison
     return Encryption.secureCompare(storedKey, keyToVerify);
+  }
+
+  /**
+   * Rotate an API key for a provider
+   * Sets the new key and emits a rotation event
+   * @param provider - Provider identifier
+   * @param newKey - New API key
+   * @param options - Validation options
+   * @returns The fingerprint of the old key (for audit purposes)
+   */
+  async rotateKey(
+    provider: ProviderName,
+    newKey: string,
+    options: KeyValidationOptions = {}
+  ): Promise<{ oldFingerprint: string | null; newFingerprint: string }> {
+    // Get old key fingerprint before rotation (for audit trail)
+    const oldFingerprint = await this.getKeyFingerprint(provider);
+
+    // Validate and set the new key (will throw if invalid)
+    await this.setKey(provider, newKey, options);
+
+    // Get new fingerprint
+    const newFingerprint = await this.getKeyFingerprint(provider);
+
+    // Emit rotation event
+    this.events.emit(EventFactory.keyRotate(provider));
+
+    return {
+      oldFingerprint,
+      newFingerprint: newFingerprint!,
+    };
   }
 
   /**
@@ -472,7 +547,7 @@ export class KeyManager {
    */
   async destroy(): Promise<void> {
     await this.clearAllKeys();
-    
+
     // Clear timers
     for (const timer of this.autoClearTimers.values()) {
       clearTimeout(timer);

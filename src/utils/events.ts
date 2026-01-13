@@ -316,6 +316,66 @@ export const EventFactory = {
       maxAttempts,
     };
   },
+
+  /**
+   * Create a key error event (for key operation failures)
+   */
+  keyError(
+    provider: ProviderName,
+    operation: 'set' | 'get' | 'remove' | 'validate' | 'rotate',
+    error: Error
+  ): SutraEventBase & { operation: string; error: Error } {
+    return {
+      type: 'key:error',
+      timestamp: Date.now(),
+      provider,
+      operation,
+      error,
+    };
+  },
+
+  /**
+   * Create a key rotation event
+   */
+  keyRotate(provider: ProviderName): SutraEventBase {
+    return {
+      type: 'key:rotate',
+      timestamp: Date.now(),
+      provider,
+    };
+  },
+
+  /**
+   * Create a key validation event
+   */
+  keyValidate(
+    provider: ProviderName,
+    valid: boolean,
+    reason?: string
+  ): SutraEventBase & { valid: boolean; reason?: string } {
+    return {
+      type: 'key:validate',
+      timestamp: Date.now(),
+      provider,
+      valid,
+      reason,
+    };
+  },
+
+  /**
+   * Create a security warning event
+   */
+  securityWarning(
+    message: string,
+    provider?: ProviderName
+  ): SutraEventBase & { message: string } {
+    return {
+      type: 'security:warning',
+      timestamp: Date.now(),
+      provider,
+      message,
+    };
+  },
 };
 
 /**
