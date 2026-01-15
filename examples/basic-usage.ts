@@ -108,7 +108,7 @@ async function localOllamaChat() {
 
       console.log('Response:', getContent(response));
     }
-  } catch (error) {
+  } catch (_error) {
     console.log('Ollama not running. Start with: ollama serve');
   }
 }

@@ -3,15 +3,13 @@
  * @module keys/storage.test
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   MemoryStorage,
   LocalStorageImpl,
   SessionStorageImpl,
   createStorage,
-  IKeyStorage,
 } from './storage';
-import type { KeyStorageOptions, ProviderName } from '../types';
 
 describe('MemoryStorage', () => {
   let storage: MemoryStorage;
@@ -124,7 +122,7 @@ describe('MemoryStorage', () => {
       const encryptedStorage = new MemoryStorage({ encrypt: true });
       await encryptedStorage.set('openai', 'openai-key');
       await encryptedStorage.set('anthropic', 'anthropic-key');
-      
+
       expect(await encryptedStorage.get('openai')).toBe('openai-key');
       expect(await encryptedStorage.get('anthropic')).toBe('anthropic-key');
     });
@@ -132,11 +130,11 @@ describe('MemoryStorage', () => {
     it('should update lastUsedAt on get', async () => {
       await storage.set('openai', 'test-key');
       const metaBefore = await storage.getMeta('openai');
-      
+
       // Wait a bit and access the key
       await new Promise(r => setTimeout(r, 10));
       await storage.get('openai');
-      
+
       const metaAfter = await storage.getMeta('openai');
       expect(metaAfter?.lastUsedAt).toBeDefined();
     });
@@ -158,16 +156,14 @@ const createMockStorage = () => {
 
 describe('LocalStorageImpl', () => {
   let mockStorage: ReturnType<typeof createMockStorage>;
-  
+
   beforeEach(() => {
     mockStorage = createMockStorage();
-    // @ts-ignore - mocking global
-    global.localStorage = mockStorage;
+    (global as unknown as Record<string, unknown>).localStorage = mockStorage;
   });
 
   afterEach(() => {
-    // @ts-ignore
-    delete global.localStorage;
+    delete (global as unknown as { localStorage?: unknown }).localStorage;
   });
 
   it('should create with default prefix', () => {
@@ -234,7 +230,7 @@ describe('LocalStorageImpl', () => {
 
   it('should return null meta for non-existent key', async () => {
     const storage = new LocalStorageImpl();
-    const meta = await storage.getMeta('nonexistent' as any);
+    const meta = await storage.getMeta('nonexistent' as import('../types').ProviderName);
     expect(meta).toBeNull();
   });
 
@@ -245,9 +241,9 @@ describe('LocalStorageImpl', () => {
   });
 
   it('should encrypt and decrypt with password', async () => {
-    const storage = new LocalStorageImpl({ 
-      encrypt: true, 
-      encryptionKey: 'test-password-123' 
+    const storage = new LocalStorageImpl({
+      encrypt: true,
+      encryptionKey: 'test-password-123'
     });
     await storage.set('openai', 'secret-key');
     const retrieved = await storage.get('openai');
@@ -257,16 +253,14 @@ describe('LocalStorageImpl', () => {
 
 describe('SessionStorageImpl', () => {
   let mockStorage: ReturnType<typeof createMockStorage>;
-  
+
   beforeEach(() => {
     mockStorage = createMockStorage();
-    // @ts-ignore - mocking global
-    global.sessionStorage = mockStorage;
+    (global as unknown as Record<string, unknown>).sessionStorage = mockStorage;
   });
 
   afterEach(() => {
-    // @ts-ignore
-    delete global.sessionStorage;
+    delete (global as unknown as { sessionStorage?: unknown }).sessionStorage;
   });
 
   it('should create with default prefix', () => {
@@ -333,9 +327,9 @@ describe('SessionStorageImpl', () => {
   });
 
   it('should encrypt and decrypt with password', async () => {
-    const storage = new SessionStorageImpl({ 
-      encrypt: true, 
-      encryptionKey: 'test-password-123' 
+    const storage = new SessionStorageImpl({
+      encrypt: true,
+      encryptionKey: 'test-password-123'
     });
     await storage.set('openai', 'secret-key');
     const retrieved = await storage.get('openai');
@@ -346,17 +340,13 @@ describe('SessionStorageImpl', () => {
 describe('createStorage', () => {
   beforeEach(() => {
     const mockStorage = createMockStorage();
-    // @ts-ignore
-    global.localStorage = mockStorage;
-    // @ts-ignore
-    global.sessionStorage = mockStorage;
+    (global as unknown as Record<string, unknown>).localStorage = mockStorage;
+    (global as unknown as Record<string, unknown>).sessionStorage = mockStorage;
   });
 
   afterEach(() => {
-    // @ts-ignore
-    delete global.localStorage;
-    // @ts-ignore
-    delete global.sessionStorage;
+    delete (global as unknown as { localStorage?: unknown }).localStorage;
+    delete (global as unknown as { sessionStorage?: unknown }).sessionStorage;
   });
 
   it('should create MemoryStorage by default', () => {

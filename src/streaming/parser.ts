@@ -94,12 +94,13 @@ function parseSSEEvent(eventStr: string): SSEEvent | null {
       case 'id':
         event.id = value;
         break;
-      case 'retry':
+      case 'retry': {
         const retry = parseInt(value, 10);
         if (!isNaN(retry)) {
           event.retry = retry;
         }
         break;
+      }
     }
   }
 
@@ -118,7 +119,7 @@ function parseSSEEvent(eventStr: string): SSEEvent | null {
  */
 export function parseSSEData<T>(data: string): T | null {
   const trimmed = data.trim();
-  
+
   // Handle end markers
   if (trimmed === '[DONE]' || trimmed === '' || trimmed === 'data: [DONE]') {
     return null;

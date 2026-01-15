@@ -233,7 +233,7 @@ export class ProviderRegistry {
     this.providers.delete(plugin.name);
 
     this.events.emit({
-      type: 'provider:registered' as any,
+      type: 'provider:registered',
       timestamp: Date.now(),
       provider: plugin.name,
     });

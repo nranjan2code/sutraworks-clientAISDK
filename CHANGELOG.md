@@ -13,6 +13,9 @@ Comprehensive code quality improvements eliminating all identified technical deb
 
 ### Critical Fixes
 
+- **Package.json Exports**: Fixed `types` ordering in exports (now before `import`/`require` for proper TypeScript resolution)
+- **SutraEventType**: Added `provider:registered` to the type union for proper event typing
+- **Parser Lexical Declaration**: Fixed `no-case-declarations` lint error in SSE parser
 - **Version Sync**: Synchronized version across `package.json`, `index.ts`, and `README.md`
 - **Circuit Breaker Integration**: `executeChat()` now uses `registry.executeWithCircuitBreaker()` for actual request protection
 - **Token Rate Limiting**: Replaced O(n) `array.shift()` with O(1) `CircularBuffer` in rate limit middleware
@@ -20,7 +23,14 @@ Comprehensive code quality improvements eliminating all identified technical deb
 - **Fallback Hash Warning**: Added console warning when crypto API unavailable and falling back to FNV-1a
 - **Request Cancellation**: Added proper cleanup of abort listeners in finally blocks to prevent memory leaks
 
+### Code Quality Fixes
+
+- **Test File Cleanup**: Removed unused imports and variables across test files
+- **Type Safety**: Replaced `as any` with proper `as ProviderName` type assertions in tests
+- **Unused Variables**: Used underscore prefix convention for intentionally unused catch variables
+
 ### Significant Fixes
+
 
 - **Middleware Error Stacks**: Preserved original error stack traces in middleware wrapping
 - **Error Mapping**: Deprecated `SutraError.fromResponse()` in favor of `createErrorFromResponse()` utility

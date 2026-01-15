@@ -41,7 +41,7 @@ async function listLocalModels() {
       console.log(`  ${i + 1}. ${model.id}`);
     });
     return models;
-  } catch (error) {
+  } catch (_error) {
     console.error('Error: Is Ollama running? Start with: ollama serve');
     return [];
   }

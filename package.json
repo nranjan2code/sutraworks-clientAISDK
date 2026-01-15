@@ -8,18 +8,18 @@
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "types": "./dist/types/index.d.ts"
+      "require": "./dist/cjs/index.js"
     },
     "./providers/*": {
       "import": "./dist/esm/providers/*.js",
       "require": "./dist/cjs/providers/*.js"
     },
     "./middleware": {
+      "types": "./dist/types/middleware/index.d.ts",
       "import": "./dist/esm/middleware/index.js",
-      "require": "./dist/cjs/middleware/index.js",
-      "types": "./dist/types/middleware/index.d.ts"
+      "require": "./dist/cjs/middleware/index.js"
     }
   },
   "files": [

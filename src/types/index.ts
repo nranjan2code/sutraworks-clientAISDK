@@ -422,7 +422,8 @@ export type SutraEventType =
   | 'middleware:after'
   | 'batch:progress'
   | 'batch:complete'
-  | 'stream:abort';
+  | 'stream:abort'
+  | 'provider:registered';
 
 /** Base event data */
 export interface SutraEventBase {

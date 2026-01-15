@@ -8,7 +8,7 @@ import { ProviderRegistry } from './registry';
 import { ConfigManager } from './config';
 import { EventEmitter } from '../utils/events';
 import { BaseProvider } from '../providers/base';
-import type { ProviderConfig, ChatRequest, ChatResponse, ChatStreamDelta, ModelInfo, ProviderName } from '../types';
+import type { ChatRequest, ChatResponse, ChatStreamDelta, ModelInfo, ProviderName } from '../types';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -98,7 +98,7 @@ describe('ProviderRegistry', () => {
     it('should check if provider exists', () => {
       expect(registry.hasProvider('openai')).toBe(true);
       expect(registry.hasProvider('anthropic')).toBe(true);
-      expect(registry.hasProvider('unknown' as any)).toBe(false);
+      expect(registry.hasProvider('unknown' as ProviderName)).toBe(false);
     });
   });
 
@@ -115,51 +115,51 @@ describe('ProviderRegistry', () => {
     });
 
     it('should throw for unregistered provider', () => {
-      expect(() => registry.getProvider('nonexistent' as any))
+      expect(() => registry.getProvider('nonexistent' as ProviderName))
         .toThrow('Provider "nonexistent" not found');
     });
   });
 
   describe('custom provider registration', () => {
     it('should register custom provider via registerProvider', () => {
-      registry.registerProvider('custom' as any, MockProvider);
-      expect(registry.hasProvider('custom' as any)).toBe(true);
+      registry.registerProvider('custom' as ProviderName, MockProvider);
+      expect(registry.hasProvider('custom' as ProviderName)).toBe(true);
     });
 
     it('should get custom provider instance', () => {
-      registry.registerProvider('custom' as any, MockProvider);
-      const provider = registry.getProvider('custom' as any);
+      registry.registerProvider('custom' as ProviderName, MockProvider);
+      const provider = registry.getProvider('custom' as ProviderName);
       expect(provider).toBeInstanceOf(MockProvider);
     });
 
     it('should register plugin with metadata', () => {
       registry.registerPlugin({
-        name: 'plugin' as any,
+        name: 'plugin' as ProviderName,
         provider: MockProvider,
         description: 'Test plugin',
         version: '1.0.0',
       });
-      expect(registry.hasProvider('plugin' as any)).toBe(true);
+      expect(registry.hasProvider('plugin' as ProviderName)).toBe(true);
     });
 
     it('should register plugin with default config', () => {
       registry.registerPlugin({
-        name: 'configured' as any,
+        name: 'configured' as ProviderName,
         provider: MockProvider,
         defaultConfig: { baseUrl: 'https://custom.api.com' },
       });
-      expect(registry.hasProvider('configured' as any)).toBe(true);
+      expect(registry.hasProvider('configured' as ProviderName)).toBe(true);
     });
   });
 
   describe('unregister provider', () => {
     it('should unregister custom provider', () => {
-      registry.registerProvider('custom' as any, MockProvider);
-      expect(registry.hasProvider('custom' as any)).toBe(true);
+      registry.registerProvider('custom' as ProviderName, MockProvider);
+      expect(registry.hasProvider('custom' as ProviderName)).toBe(true);
 
-      const removed = registry.unregisterProvider('custom' as any);
+      const removed = registry.unregisterProvider('custom' as ProviderName);
       expect(removed).toBe(true);
-      expect(registry.hasProvider('custom' as any)).toBe(false);
+      expect(registry.hasProvider('custom' as ProviderName)).toBe(false);
     });
 
     it('should not unregister built-in providers', () => {
@@ -182,7 +182,7 @@ describe('ProviderRegistry', () => {
     });
 
     it('should return null for unknown provider', () => {
-      const health = registry.getProviderHealth('unknown' as any);
+      const health = registry.getProviderHealth('unknown' as ProviderName);
       expect(health).toBeNull();
     });
 

@@ -5,7 +5,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { KeyManager } from './manager';
-import { MemoryStorage } from './storage';
 import { EventEmitter } from '../utils/events';
 import { SutraError } from '../types';
 
@@ -16,9 +15,6 @@ const TEST_KEYS = {
   google: 'AIzaTestKey1234567890abcdefghijklmnop',
   groq: 'gsk_test1234567890abcdefghijklmnopqrstuvwxyzabcdefghijk',
 };
-
-// Option to skip format validation in tests (for testing manager logic, not validation)
-const SKIP_FORMAT = { skipFormatCheck: true };
 
 describe('KeyManager', () => {
   let manager: KeyManager;
@@ -175,8 +171,6 @@ describe('KeyManager', () => {
     it('should handle concurrent setKey operations safely', async () => {
       // Run concurrent setKey operations using Promise.all
       const key1 = 'sk-key1-1234567890abcdefghijklmnopqrst';
-      const key2 = 'sk-key2-1234567890abcdefghijklmnopqrst';
-      const key3 = 'sk-key3-1234567890abcdefghijklmnopqrst';
 
       await Promise.all([
         manager.setKey('openai', key1),
