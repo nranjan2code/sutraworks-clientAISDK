@@ -1,13 +1,5 @@
-import { SutraAI } from '@sutraworks/client-ai-sdk';
-
-/**
- * PII Redactor Example
- * 
- * Demonstrates:
- * 1. Privacy-first architecture (Process sensitive data without sending to backend)
- * 2. Strict system prompts
- * 3. Structured JSON output
- */
+import { SutraAI } from '../../../../src';
+import { PIIConfig } from './config';
 
 export interface RedactionResult {
     originalText: string;
@@ -19,40 +11,46 @@ export interface RedactionResult {
 
 export class SecureRedactor {
     private client: SutraAI;
+    private config: PIIConfig;
 
-    // Regex patterns for fast preliminary scanning
-    // Note: These are basic patterns for demonstration. Enterprise compliance needs stricter ones.
-    private static PATTERNS = {
+    private static DEFAULT_PATTERNS = {
         EMAIL: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
         PHONE: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g,
         SSN: /\b\d{3}-\d{2}-\d{4}\b/g,
-        CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g
+        CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
+        IPV4: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g
     };
 
-    constructor(apiKey: string) {
+    private patterns: Record<string, RegExp>;
+
+    constructor(apiKey: string, config: PIIConfig = {}) {
         this.client = new SutraAI();
+        // Uses OpenAI for high intelligence redaction
         this.client.setKey('openai', apiKey);
+        this.config = config;
+
+        // Merge default patterns with custom overrides
+        this.patterns = { ...SecureRedactor.DEFAULT_PATTERNS, ...config.patterns };
     }
 
     /**
      * Redact PII from text using a Hybrid Strategy
      * 1. Fast Regex Scan: If simple patterns match, we flag it.
-     * 2. LLM Verification: We use the LLM to contextually redact and find things regex missed (like names).
+     * 2. LLM Verification: Contextual redaction.
      */
     async redact(text: string): Promise<RedactionResult> {
         // Step 1: Preliminary Regex Check
         const regexHits = this.scanRegex(text);
 
-        // If text is very long or looks safe, we might skip LLM or use a cheaper model
-        // For this enterprise sample, we default to maximum security -> LLM
-
         try {
             return await this.performLLMRedaction(text, regexHits);
         } catch (error) {
             console.warn("LLM Redaction failed, falling back to Regex-only", error);
+            // Fallback to purely regex (deterministically safe but maybe over-aggressive)
+            const regexRedacted = this.applyRegexRedaction(text);
             return {
                 originalText: text,
-                redactedText: this.applyRegexRedaction(text),
+                redactedText: regexRedacted,
                 fieldsDetected: regexHits,
                 riskLevel: regexHits.length > 0 ? 'MEDIUM' : 'LOW',
                 processingMethod: 'FALLBACK'
@@ -62,26 +60,38 @@ export class SecureRedactor {
 
     private scanRegex(text: string): string[] {
         const hits: string[] = [];
-        if (SecureRedactor.PATTERNS.EMAIL.test(text)) hits.push('EMAIL');
-        if (SecureRedactor.PATTERNS.PHONE.test(text)) hits.push('PHONE');
-        if (SecureRedactor.PATTERNS.SSN.test(text)) hits.push('SSN');
-        if (SecureRedactor.PATTERNS.CREDIT_CARD.test(text)) hits.push('CREDIT_CARD');
+        for (const [key, pattern] of Object.entries(this.patterns)) {
+            if (pattern.test(text)) {
+                hits.push(key);
+            }
+        }
         return hits;
     }
 
     private applyRegexRedaction(text: string): string {
         let redacted = text;
-        redacted = redacted.replace(SecureRedactor.PATTERNS.EMAIL, '[REDACTED_EMAIL]');
-        redacted = redacted.replace(SecureRedactor.PATTERNS.PHONE, '[REDACTED_PHONE]');
-        redacted = redacted.replace(SecureRedactor.PATTERNS.SSN, '[REDACTED_SSN]');
-        redacted = redacted.replace(SecureRedactor.PATTERNS.CREDIT_CARD, '[REDACTED_CC]');
+        for (const [key, pattern] of Object.entries(this.patterns)) {
+            redacted = redacted.replace(pattern, (match) => {
+                if (this.isAllowed(match)) return match;
+                return `[REDACTED_${key}]`;
+            });
+        }
         return redacted;
     }
 
+    private isAllowed(value: string): boolean {
+        return this.config.allowList?.includes(value) ?? false;
+    }
+
     private async performLLMRedaction(text: string, regexHits: string[]): Promise<RedactionResult> {
+        // Build allow list string for system prompt
+        const allowListNote = this.config.allowList
+            ? `Do NOT redact the following specific values: ${this.config.allowList.join(', ')}`
+            : '';
+
         const response = await this.client.chat({
             provider: 'openai',
-            model: 'gpt-4o', // Using a high-intelligence model for better context awareness
+            model: 'gpt-4o',
             response_format: { type: 'json_object' },
             messages: [
                 {
@@ -93,7 +103,9 @@ export class SecureRedactor {
           2. Redact them using [REDACTED_TYPE] tags.
           3. Assess the Risk Level based on sensitivity (HIGH for SSN/CC/Medical, MEDIUM for Phones/Emails, LOW for Names).
           
+          CONFIG:
           Regex Pre-scan found: ${regexHits.join(', ') || 'None'}
+          ${allowListNote}
           
           Return JSON:
           {

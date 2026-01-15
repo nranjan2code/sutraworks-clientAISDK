@@ -119,8 +119,13 @@ export {
   estimateCost,
   formatCost,
   TokenCounter,
-  MODEL_PRICING,
+
 } from './utils/tokens';
+
+export {
+  PricingRegistry,
+  pricingRegistry,
+} from './utils/pricing';
 export {
   MemoryCache,
   IndexedDBCache,

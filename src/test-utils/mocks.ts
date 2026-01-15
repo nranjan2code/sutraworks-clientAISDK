@@ -168,11 +168,11 @@ export function createMockErrorResponse(
 ): Response {
   const statusText = status === 400 ? 'Bad Request'
     : status === 401 ? 'Unauthorized'
-    : status === 403 ? 'Forbidden'
-    : status === 404 ? 'Not Found'
-    : status === 429 ? 'Too Many Requests'
-    : status === 500 ? 'Internal Server Error'
-    : 'Error';
+      : status === 403 ? 'Forbidden'
+        : status === 404 ? 'Not Found'
+          : status === 429 ? 'Too Many Requests'
+            : status === 500 ? 'Internal Server Error'
+              : 'Error';
 
   return createMockResponse(errorBody, { status, statusText });
 }
@@ -387,20 +387,20 @@ export function captureConsole(): {
  * Helper to create a mock EventEmitter for testing
  */
 export function createMockEventEmitter() {
-  const listeners = new Map<string, Set<Function>>();
+  const listeners = new Map<string, Set<(...args: any[]) => void>>();
 
   return {
-    on: vi.fn((event: string, callback: Function) => {
+    on: vi.fn((event: string, callback: (...args: any[]) => void) => {
       if (!listeners.has(event)) {
         listeners.set(event, new Set());
       }
       listeners.get(event)!.add(callback);
       return () => listeners.get(event)?.delete(callback);
     }),
-    off: vi.fn((event: string, callback: Function) => {
+    off: vi.fn((event: string, callback: (...args: any[]) => void) => {
       listeners.get(event)?.delete(callback);
     }),
-    emit: vi.fn((eventData: { type: string }) => {
+    emit: vi.fn((eventData: { type: string;[key: string]: any }) => {
       const eventListeners = listeners.get(eventData.type);
       if (eventListeners) {
         for (const callback of eventListeners) {
@@ -408,7 +408,7 @@ export function createMockEventEmitter() {
         }
       }
     }),
-    once: vi.fn((event: string, callback: Function) => {
+    once: vi.fn((event: string, callback: (...args: any[]) => void) => {
       const wrappedCallback = (...args: unknown[]) => {
         listeners.get(event)?.delete(wrappedCallback);
         callback(...args);

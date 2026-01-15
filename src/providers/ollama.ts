@@ -386,10 +386,10 @@ export class OllamaProvider extends BaseProvider {
       ],
       usage: chunk.done
         ? {
-            prompt_tokens: chunk.prompt_eval_count ?? 0,
-            completion_tokens: chunk.eval_count ?? 0,
-            total_tokens: (chunk.prompt_eval_count ?? 0) + (chunk.eval_count ?? 0),
-          }
+          prompt_tokens: chunk.prompt_eval_count ?? 0,
+          completion_tokens: chunk.eval_count ?? 0,
+          total_tokens: (chunk.prompt_eval_count ?? 0) + (chunk.eval_count ?? 0),
+        }
         : undefined,
     };
   }
@@ -404,7 +404,7 @@ export class OllamaProvider extends BaseProvider {
       type: isEmbedding ? 'embedding' : 'chat',
       context_window: this.estimateContextWindow(model),
       supports_vision: model.details.families?.includes('clip') ?? false,
-      supports_tools: false,
+      supports_tools: true, // Enable tool support
       supports_streaming: true,
     };
   }

@@ -1,4 +1,4 @@
-import { SutraAI, ChatResponse } from '@sutraworks/client-ai-sdk';
+import { SutraAI, ChatResponse } from '../../../../src';
 
 export interface ArenaResult {
     provider: string;
@@ -6,13 +6,13 @@ export interface ArenaResult {
     content: string;
     latency: number;
     tokens: number;
-    vote: number | null; // Consensus vote score (0-1)
+    vote: number | null; // Consensus vote score (0-10)
 }
 
 export class ModelArena {
     private client: SutraAI;
 
-    // Need a "Judge" model for consensus (usually a smart one like GPT-4 or Claude 3 Opus)
+    // "Judge" model for consensus
     private readonly JUDGE_MODEL = { provider: 'openai', model: 'gpt-4o' };
 
     constructor(keys: Partial<Record<string, string>>) {
@@ -79,7 +79,6 @@ export class ModelArena {
     private async judgeResults(originalPrompt: string, results: ArenaResult[]) {
         console.log("⚖️ The Judge is deliberating...");
 
-        // Prepare the case for the judge
         const candidates = results.map((r, i) => `[Candidate ${i + 1} (${r.model})]:\n${r.content}\n`).join('\n---\n');
 
         const judgment = await this.client.chat({
@@ -96,7 +95,7 @@ export class ModelArena {
                     TASK:
                     1. Read the candidates' responses.
                     2. Score each candidate from 0.0 to 10.0 based on accuracy, helpfulness, and tone.
-                    3. Return JSON: { "scores": [8.5, 9.2, ...] } corresponding to Candidate 1, 2...`
+                    3. Return JSON: { "scores": [8.5, 9.2, ...] } corresponding to Candidate 1, 2, ... in order.`
                 },
                 { role: 'user', content: candidates }
             ]
@@ -107,8 +106,6 @@ export class ModelArena {
             const parsed = JSON.parse(content);
             const scores = parsed.scores as number[];
 
-            // Assign scores back to the results
-            // 'results' here corresponds to the array passed to judgeResults (which are the valid ones)
             results.forEach((r, i) => {
                 if (scores[i] !== undefined) {
                     r.vote = scores[i];
@@ -118,5 +115,14 @@ export class ModelArena {
         } catch (e) {
             console.error("Judge failed to output valid JSON scores", e);
         }
+    }
+
+    /**
+     * Helper: Calculate pairwise win probability (Elo-like)
+     * Demonstrates data analysis utilities
+     */
+    static calculateWinRate(modelScore: number, opponentScore: number): number {
+        // Simple sigmoid / logistic function assumption for demonstration
+        return 1 / (1 + Math.pow(10, (opponentScore - modelScore) / 4)); // 4 is arbitrary scale factor
     }
 }
