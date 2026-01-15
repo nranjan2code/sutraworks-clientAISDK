@@ -4,6 +4,7 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 2.1.x   | :white_check_mark: |
 | 2.0.x   | :white_check_mark: |
 | < 2.0   | :x:                |
 
@@ -66,6 +67,17 @@ When encryption is enabled, the SDK uses:
    - Automatic failure detection
    - Prevents cascade failures
    - Self-healing recovery
+   - Configurable via `CIRCUIT_BREAKER_DEFAULTS`
+
+8. **Configuration Validation**
+   - Validates `timeout` is positive
+   - Validates `maxRetries` is non-negative
+   - Validates `baseUrl` is a valid URL
+   - Prevents runtime errors from invalid config
+
+9. **IndexedDB Connection Management**
+    - Explicit `close()` method for cleanup
+    - Prevents persistent connections
 
 ## Reporting a Vulnerability
 

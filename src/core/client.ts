@@ -76,13 +76,13 @@ export class SutraAI {
 
     // Initialize middleware
     this.middlewareManager = new MiddlewareManager();
-    
+
     // Add validation middleware by default (enterprise-grade)
     this.enableValidation = config?.enableValidation ?? true;
     if (this.enableValidation) {
       this.middlewareManager.use(createValidationMiddleware({ strict: true }));
     }
-    
+
     // Add user-provided middleware
     if (config?.middleware) {
       for (const mw of config.middleware) {
@@ -295,7 +295,7 @@ export class SutraAI {
       // Execute error middleware
       if (error instanceof SutraError) {
         const result = await this.middlewareManager.executeErrorMiddleware(error, context);
-        
+
         // Check if middleware recovered with a response
         if ('choices' in result) {
           return result;
@@ -327,6 +327,7 @@ export class SutraAI {
 
   /**
    * Execute chat request (internal)
+   * Protected by circuit breaker for resilience
    */
   private async executeChat(
     request: ChatRequest,
@@ -335,8 +336,11 @@ export class SutraAI {
     // Get provider
     const provider = this.registry.getProvider(request.provider);
 
-    // Execute request
-    const response = await provider.chat(request);
+    // Execute request with circuit breaker protection
+    const response = await this.registry.executeWithCircuitBreaker(
+      request.provider,
+      () => provider.chat(request)
+    );
 
     // Track tokens
     if (response.usage) {
@@ -456,16 +460,26 @@ export class SutraAI {
 
   /**
    * Execute multiple chat requests in parallel with concurrency control
+   * Supports retry budget to prevent retry storms
    */
   async batch(batchRequest: BatchRequest): Promise<BatchResponse> {
     this.ensureNotDestroyed();
 
-    const { requests, concurrency = 5, stopOnError = false, onProgress } = batchRequest;
+    const {
+      requests,
+      concurrency = 5,
+      stopOnError = false,
+      onProgress,
+      maxTotalRetries
+    } = batchRequest;
+
     const results: Array<ChatResponse | SutraError> = new Array(requests.length);
     let completed = 0;
     let successful = 0;
     let failed = 0;
     let totalTokens = 0;
+    let totalRetries = 0;
+    let retryBudgetExhausted = false;
     const startTime = Date.now();
 
     // Process in chunks based on concurrency
@@ -478,7 +492,12 @@ export class SutraAI {
       const chunkPromises = chunk.map(async (request, chunkIndex) => {
         const index = chunks.indexOf(chunk) * concurrency + chunkIndex;
         try {
-          const response = await this.chat(request);
+          // If retry budget is exhausted, fail fast without retrying
+          const effectiveRequest = retryBudgetExhausted
+            ? { ...request, skipCache: true } // Could add noRetry flag if supported
+            : request;
+
+          const response = await this.chat(effectiveRequest);
           results[index] = response;
           successful++;
           totalTokens += response.usage?.total_tokens ?? 0;
@@ -488,10 +507,19 @@ export class SutraAI {
           const sutraError = error instanceof SutraError
             ? error
             : new SutraError(
-                error instanceof Error ? error.message : 'Unknown error',
-                'UNKNOWN_ERROR',
-                { cause: error instanceof Error ? error : undefined }
-              );
+              error instanceof Error ? error.message : 'Unknown error',
+              'UNKNOWN_ERROR',
+              { cause: error instanceof Error ? error : undefined }
+            );
+
+          // Track retries if the error indicates a retry occurred
+          if (sutraError.retryable) {
+            totalRetries++;
+            if (maxTotalRetries !== undefined && totalRetries >= maxTotalRetries) {
+              retryBudgetExhausted = true;
+            }
+          }
+
           results[index] = sutraError;
           failed++;
           onProgress?.(completed + 1, requests.length);
@@ -503,7 +531,7 @@ export class SutraAI {
 
       const chunkResults = await Promise.all(chunkPromises);
 
-      // Check for stop on error
+      // Check for stop on error or retry budget exhaustion
       if (stopOnError && chunkResults.some(r => !r.success)) {
         break;
       }

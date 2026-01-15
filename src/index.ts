@@ -20,12 +20,12 @@
  */
 
 /** SDK Version - synchronized with package.json */
-export const VERSION = '2.0.0';
+export const VERSION = '2.1.0';
 
 // Core modules
 export { SutraAI } from './core/client';
 export { ConfigManager, DEFAULT_PROVIDER_CONFIGS } from './core/config';
-export { ProviderRegistry } from './core/registry';
+export { ProviderRegistry, CIRCUIT_BREAKER_DEFAULTS } from './core/registry';
 export type { ProviderConstructor, ProviderPlugin, ProviderHealth } from './core/registry';
 export { ModelRegistry, getModelRegistry, resetModelRegistry, MODEL_REGISTRY } from './core/models';
 export type { ExtendedModelInfo, ModelPricing } from './core/models';

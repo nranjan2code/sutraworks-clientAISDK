@@ -18,13 +18,13 @@ export async function generateCacheKeyAsync(request: ChatRequest | CompletionReq
     temperature: request.temperature ?? 'default',
     max_tokens: request.max_tokens ?? 'default',
     top_p: request.top_p ?? 'default',
-    content: 'messages' in request 
+    content: 'messages' in request
       ? JSON.stringify(request.messages)
       : (request as CompletionRequest).prompt,
   };
 
   const keyString = JSON.stringify(keyParts);
-  
+
   // Use SHA-256 for collision-resistant hashing
   if (typeof crypto !== 'undefined' && crypto.subtle) {
     const encoder = new TextEncoder();
@@ -33,14 +33,17 @@ export async function generateCacheKeyAsync(request: ChatRequest | CompletionReq
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  
+
   // Fallback to improved hash if crypto not available
-  return fallbackHash(keyString);
+  return fallbackHash(keyString, true);
 }
 
 /**
  * Synchronous cache key generation (for backward compatibility)
  * Uses fallback hash when async not possible
+ * 
+ * @warning This function uses a non-cryptographic hash (FNV-1a).
+ * For security-critical applications, use generateCacheKeyAsync instead.
  */
 export function generateCacheKey(request: ChatRequest | CompletionRequest): string {
   const keyParts = {
@@ -49,23 +52,43 @@ export function generateCacheKey(request: ChatRequest | CompletionRequest): stri
     temperature: request.temperature ?? 'default',
     max_tokens: request.max_tokens ?? 'default',
     top_p: request.top_p ?? 'default',
-    content: 'messages' in request 
+    content: 'messages' in request
       ? JSON.stringify(request.messages)
       : (request as CompletionRequest).prompt,
   };
 
-  return fallbackHash(JSON.stringify(keyParts));
+  return fallbackHash(JSON.stringify(keyParts), false);
 }
 
+// Track whether we've warned about fallback hash usage
+let fallbackHashWarningShown = false;
+
 /**
- * Improved fallback hash function using FNV-1a
- * Better distribution than simple djb2 hash
+ * Fallback hash function using FNV-1a
+ * 
+ * @warning NOT CRYPTOGRAPHICALLY SECURE
+ * This is a fast, non-cryptographic hash suitable only for cache key generation.
+ * It should NOT be used for security-critical purposes.
+ * 
+ * @param str - String to hash
+ * @param showWarning - Whether to show a console warning (default: false)
+ * @returns Hash string in base36
  */
-function fallbackHash(str: string): string {
-  // FNV-1a hash - better distribution
+function fallbackHash(str: string, showWarning: boolean = false): string {
+  // Emit warning once per session when crypto is unavailable
+  if (showWarning && !fallbackHashWarningShown) {
+    fallbackHashWarningShown = true;
+    console.warn(
+      '[Sutraworks SDK] Web Crypto API not available. Using non-cryptographic FNV-1a hash for cache keys. ' +
+      'This is safe for caching but not for security-critical operations. ' +
+      'Ensure you are running in a secure context (HTTPS) for SHA-256 hashing.'
+    );
+  }
+
+  // FNV-1a hash - better distribution than djb2
   let hash1 = 2166136261;
   let hash2 = 2166136261;
-  
+
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     // First hash
@@ -75,7 +98,7 @@ function fallbackHash(str: string): string {
     hash2 ^= char;
     hash2 = Math.imul(hash2, 2654435761);
   }
-  
+
   // Combine both hashes for better collision resistance
   const combined = (hash1 >>> 0).toString(36) + (hash2 >>> 0).toString(36);
   return combined;
@@ -146,7 +169,7 @@ export class MemoryCache<T> {
     if (node.next) node.next.prev = node.prev;
     if (node === this.head) this.head = node.next;
     if (node === this.tail) this.tail = node.prev;
-    
+
     this.currentSize -= node.entry.size ?? 0;
     this.cache.delete(node.key);
   }
@@ -156,7 +179,7 @@ export class MemoryCache<T> {
    */
   get(key: string): T | null {
     const node = this.cache.get(key);
-    
+
     if (!node) {
       return null;
     }
@@ -170,7 +193,7 @@ export class MemoryCache<T> {
     // Update hits and move to front (LRU)
     node.entry.hits++;
     this.moveToFront(node);
-    
+
     return node.entry.value;
   }
 
@@ -180,7 +203,7 @@ export class MemoryCache<T> {
   set(key: string, value: T, ttl?: number): void {
     const size = estimateSize(value);
     const effectiveTtl = ttl ?? this.ttl;
-    
+
     // Check if updating existing entry
     const existingNode = this.cache.get(key);
     if (existingNode) {
@@ -200,7 +223,7 @@ export class MemoryCache<T> {
 
     // Evict if needed (by count or size)
     while (
-      (this.cache.size >= this.maxEntries || this.currentSize + size > this.maxSize) && 
+      (this.cache.size >= this.maxEntries || this.currentSize + size > this.maxSize) &&
       this.tail
     ) {
       this.removeNode(this.tail);
@@ -294,9 +317,9 @@ export class MemoryCache<T> {
   /**
    * Get cache statistics
    */
-  getStats(): { 
-    size: number; 
-    totalHits: number; 
+  getStats(): {
+    size: number;
+    totalHits: number;
     avgHits: number;
     memoryUsage: number;
     oldestEntry: number | null;
@@ -367,7 +390,7 @@ export class IndexedDBCache<T> {
 
   private async getDB(): Promise<IDBDatabase> {
     if (this.db) return this.db;
-    
+
     // Prevent multiple simultaneous init attempts
     if (this.initPromise) return this.initPromise;
 
@@ -386,24 +409,24 @@ export class IndexedDBCache<T> {
 
       request.onsuccess = () => {
         this.db = request.result;
-        
+
         // Handle database close/error
         this.db.onclose = () => {
           this.db = null;
           this.initPromise = null;
         };
-        
+
         resolve(this.db);
       };
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        
+
         // Delete old store if exists
         if (db.objectStoreNames.contains(this.storeName)) {
           db.deleteObjectStore(this.storeName);
         }
-        
+
         const store = db.createObjectStore(this.storeName, { keyPath: 'key' });
         store.createIndex('createdAt', 'createdAt');
         store.createIndex('expiresAt', 'expiresAt');
@@ -427,7 +450,7 @@ export class IndexedDBCache<T> {
 
         request.onsuccess = async () => {
           const entry = request.result as CacheEntry<T> | undefined;
-          
+
           if (!entry) {
             resolve(null);
             return;
@@ -441,7 +464,7 @@ export class IndexedDBCache<T> {
           }
 
           // Update hits in background (don't wait)
-          this.updateHits(key, entry.hits + 1).catch(() => {});
+          this.updateHits(key, entry.hits + 1).catch(() => { });
 
           resolve(entry.value);
         };
@@ -479,7 +502,7 @@ export class IndexedDBCache<T> {
     // Check size and evict if needed
     const currentSize = await this.getTotalSize();
     const count = await this.size();
-    
+
     if (count >= this.maxEntries || currentSize + size > this.maxSize) {
       await this.evictOldest(Math.max(1, Math.floor(this.maxEntries * 0.1)));
     }

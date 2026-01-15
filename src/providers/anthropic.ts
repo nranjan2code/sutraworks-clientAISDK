@@ -200,8 +200,47 @@ export class AnthropicProvider extends BaseProvider {
   }
 
   async listModels(): Promise<ModelInfo[]> {
-    // Anthropic doesn't have a models endpoint, return known models
+    // Anthropic doesn't have a models endpoint, return known models (January 2026)
     return [
+      {
+        id: 'claude-sonnet-4-20250514',
+        name: 'Claude Sonnet 4',
+        provider: this.name,
+        type: 'chat',
+        context_window: 200000,
+        max_output_tokens: 16384,
+        supports_vision: true,
+        supports_tools: true,
+        supports_streaming: true,
+        input_cost_per_token: 0.000003,
+        output_cost_per_token: 0.000015,
+      },
+      {
+        id: 'claude-3-5-sonnet-20241022',
+        name: 'Claude 3.5 Sonnet',
+        provider: this.name,
+        type: 'chat',
+        context_window: 200000,
+        max_output_tokens: 8192,
+        supports_vision: true,
+        supports_tools: true,
+        supports_streaming: true,
+        input_cost_per_token: 0.000003,
+        output_cost_per_token: 0.000015,
+      },
+      {
+        id: 'claude-3-5-haiku-20241022',
+        name: 'Claude 3.5 Haiku',
+        provider: this.name,
+        type: 'chat',
+        context_window: 200000,
+        max_output_tokens: 8192,
+        supports_vision: true,
+        supports_tools: true,
+        supports_streaming: true,
+        input_cost_per_token: 0.0000008,
+        output_cost_per_token: 0.000004,
+      },
       {
         id: 'claude-3-opus-20240229',
         name: 'Claude 3 Opus',
@@ -217,7 +256,7 @@ export class AnthropicProvider extends BaseProvider {
       },
       {
         id: 'claude-3-sonnet-20240229',
-        name: 'Claude 3 Sonnet',
+        name: 'Claude 3 Sonnet (Legacy)',
         provider: this.name,
         type: 'chat',
         context_window: 200000,
@@ -227,10 +266,11 @@ export class AnthropicProvider extends BaseProvider {
         supports_streaming: true,
         input_cost_per_token: 0.000003,
         output_cost_per_token: 0.000015,
+        deprecated: '2025-03-01',
       },
       {
         id: 'claude-3-haiku-20240307',
-        name: 'Claude 3 Haiku',
+        name: 'Claude 3 Haiku (Legacy)',
         provider: this.name,
         type: 'chat',
         context_window: 200000,
@@ -240,17 +280,7 @@ export class AnthropicProvider extends BaseProvider {
         supports_streaming: true,
         input_cost_per_token: 0.00000025,
         output_cost_per_token: 0.00000125,
-      },
-      {
-        id: 'claude-2.1',
-        name: 'Claude 2.1',
-        provider: this.name,
-        type: 'chat',
-        context_window: 200000,
-        max_output_tokens: 4096,
-        supports_vision: false,
-        supports_tools: false,
-        supports_streaming: true,
+        deprecated: '2025-03-01',
       },
     ];
   }

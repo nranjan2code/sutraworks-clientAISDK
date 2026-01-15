@@ -5,11 +5,53 @@ All notable changes to the Sutraworks Client AI SDK will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-01-15
+
+### 🎯 Zero Technical Debt Release
+
+Comprehensive code quality improvements eliminating all identified technical debt.
+
+### Critical Fixes
+
+- **Version Sync**: Synchronized version across `package.json`, `index.ts`, and `README.md`
+- **Circuit Breaker Integration**: `executeChat()` now uses `registry.executeWithCircuitBreaker()` for actual request protection
+- **Token Rate Limiting**: Replaced O(n) `array.shift()` with O(1) `CircularBuffer` in rate limit middleware
+- **Anthropic Models Updated**: Added Claude Sonnet 4, Claude 3.5 Sonnet/Haiku; marked older models as deprecated
+- **Fallback Hash Warning**: Added console warning when crypto API unavailable and falling back to FNV-1a
+- **Request Cancellation**: Added proper cleanup of abort listeners in finally blocks to prevent memory leaks
+
+### Significant Fixes
+
+- **Middleware Error Stacks**: Preserved original error stack traces in middleware wrapping
+- **Error Mapping**: Deprecated `SutraError.fromResponse()` in favor of `createErrorFromResponse()` utility
+- **Configuration Validation**: Added validation for timeout (positive), maxRetries (non-negative), baseUrl (valid URL)
+- **IndexedDB Connection**: Added `close()` method to `IndexedDBStorage` for proper database lifecycle management
+- **Token Estimation Docs**: Added comprehensive module documentation about estimation limitations
+- **Header Merge Docs**: Documented header priority order in `BaseProvider.makeRequest()`
+
+### Moderate Fixes
+
+- **Circuit Breaker Constants**: Extracted magic numbers to `CIRCUIT_BREAKER_DEFAULTS` constant
+- **Batch Retry Budget**: Added `maxTotalRetries` option to `BatchRequest` to prevent retry storms
+- **CORS Documentation**: Added Ollama CORS configuration guide for browser usage
+
+### Added
+
+- `IKeyStorage.close()` optional method for resource cleanup
+- `CIRCUIT_BREAKER_DEFAULTS` exported constant for configuration reference
+- `BatchRequest.maxTotalRetries` for batch retry budget control
+- Comprehensive JSDoc documentation throughout codebase
+
+### Changed
+
+- `CircularBuffer` now imported in middleware for O(1) token tracking
+- Provider configuration validation runs at `ConfigManager` construction time
+
+---
+
 ## [2.0.3] - 2026-01-13
 
 ### 🏢 Enterprise-Level Fixes - Zero Technical Debt
-
-Major release focused on performance, reliability, and observability improvements.
 
 ### Added
 

@@ -23,6 +23,19 @@ import { CircuitBreaker } from '../utils/retry';
 import { getModelRegistry } from './models';
 
 /**
+ * Default circuit breaker configuration
+ * These values provide balanced resilience for AI provider APIs
+ */
+export const CIRCUIT_BREAKER_DEFAULTS = {
+  /** Number of failures before circuit opens */
+  failureThreshold: 5,
+  /** Time in ms before circuit transitions from open to half-open */
+  resetTimeout: 30000,
+  /** Number of successful requests in half-open state to close circuit */
+  halfOpenRequests: 3,
+} as const;
+
+/**
  * Provider constructor type
  */
 export type ProviderConstructor = new (
@@ -193,7 +206,11 @@ export class ProviderRegistry {
   private getCircuitBreaker(name: ProviderName): CircuitBreaker {
     let breaker = this.circuitBreakers.get(name);
     if (!breaker) {
-      breaker = new CircuitBreaker(5, 30000, 3);
+      breaker = new CircuitBreaker(
+        CIRCUIT_BREAKER_DEFAULTS.failureThreshold,
+        CIRCUIT_BREAKER_DEFAULTS.resetTimeout,
+        CIRCUIT_BREAKER_DEFAULTS.halfOpenRequests
+      );
       this.circuitBreakers.set(name, breaker);
     }
     return breaker;

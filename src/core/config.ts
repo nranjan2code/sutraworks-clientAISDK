@@ -137,20 +137,47 @@ export class ConfigManager {
 
   /**
    * Merge user config with defaults
+   * Validates all configuration values
    */
   private mergeConfigs(userConfig?: SutraConfig): Required<SutraConfig> {
     const providers: Record<string, ProviderConfig> = { ...DEFAULT_PROVIDER_CONFIGS };
 
-    // Merge user provider configs
+    // Merge and validate user provider configs
     if (userConfig?.providers) {
       for (const [name, config] of Object.entries(userConfig.providers)) {
         if (config) {
-          providers[name] = {
+          const mergedConfig: ProviderConfig = {
             ...DEFAULT_PROVIDER_CONFIGS[name],
             ...config,
             name: name as ProviderName,
           };
+          this.validateProviderConfig(name, mergedConfig);
+          providers[name] = mergedConfig;
         }
+      }
+    }
+
+    // Validate global config values
+    if (userConfig?.defaultTimeout !== undefined) {
+      this.validatePositiveNumber('defaultTimeout', userConfig.defaultTimeout);
+    }
+    if (userConfig?.defaultMaxRetries !== undefined) {
+      this.validateNonNegativeInteger('defaultMaxRetries', userConfig.defaultMaxRetries);
+    }
+    if (userConfig?.defaultBatchConcurrency !== undefined) {
+      this.validatePositiveNumber('defaultBatchConcurrency', userConfig.defaultBatchConcurrency);
+    }
+
+    // Validate cache options
+    if (userConfig?.cache) {
+      if (userConfig.cache.ttl !== undefined) {
+        this.validatePositiveNumber('cache.ttl', userConfig.cache.ttl);
+      }
+      if (userConfig.cache.maxEntries !== undefined) {
+        this.validatePositiveNumber('cache.maxEntries', userConfig.cache.maxEntries);
+      }
+      if (userConfig.cache.maxSize !== undefined) {
+        this.validatePositiveNumber('cache.maxSize', userConfig.cache.maxSize);
       }
     }
 
@@ -173,6 +200,60 @@ export class ConfigManager {
       validateModels: userConfig?.validateModels ?? false,
       defaultBatchConcurrency: userConfig?.defaultBatchConcurrency ?? 5,
     };
+  }
+
+  /**
+   * Validate provider configuration
+   * @throws Error if configuration is invalid
+   */
+  private validateProviderConfig(name: string, config: ProviderConfig): void {
+    if (config.timeout !== undefined) {
+      this.validatePositiveNumber(`${name}.timeout`, config.timeout);
+    }
+    if (config.maxRetries !== undefined) {
+      this.validateNonNegativeInteger(`${name}.maxRetries`, config.maxRetries);
+    }
+    if (config.baseUrl !== undefined) {
+      this.validateUrl(`${name}.baseUrl`, config.baseUrl);
+    }
+  }
+
+  /**
+   * Validate that a value is a positive number
+   * @throws Error if validation fails
+   */
+  private validatePositiveNumber(field: string, value: unknown): void {
+    if (typeof value !== 'number' || isNaN(value) || value <= 0) {
+      throw new Error(
+        `Invalid configuration: ${field} must be a positive number, got ${value}`
+      );
+    }
+  }
+
+  /**
+   * Validate that a value is a non-negative integer
+   * @throws Error if validation fails
+   */
+  private validateNonNegativeInteger(field: string, value: unknown): void {
+    if (typeof value !== 'number' || isNaN(value) || value < 0 || !Number.isInteger(value)) {
+      throw new Error(
+        `Invalid configuration: ${field} must be a non-negative integer, got ${value}`
+      );
+    }
+  }
+
+  /**
+   * Validate that a value is a valid URL
+   * @throws Error if validation fails
+   */
+  private validateUrl(field: string, value: string): void {
+    try {
+      new URL(value);
+    } catch {
+      throw new Error(
+        `Invalid configuration: ${field} must be a valid URL, got ${value}`
+      );
+    }
   }
 
   /**

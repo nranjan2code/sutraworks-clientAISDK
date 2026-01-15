@@ -16,7 +16,7 @@ import type {
 } from '../types';
 import { SutraError } from '../types';
 import { Encryption } from '../keys/encryption';
-import { TimeWindowCounter } from '../utils/circular-buffer';
+import { TimeWindowCounter, CircularBuffer } from '../utils/circular-buffer';
 
 // Re-export validation middleware
 export {
@@ -145,14 +145,20 @@ export class MiddlewareManager {
       try {
         currentRequest = await mw.beforeRequest(currentRequest, context);
       } catch (error) {
-        throw new SutraError(
-          `Middleware "${mw.name}" failed in beforeRequest: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        const originalError = error instanceof Error ? error : new Error(String(error));
+        const wrappedError = new SutraError(
+          `Middleware "${mw.name}" failed in beforeRequest: ${originalError.message}`,
           'MIDDLEWARE_ERROR',
           {
-            cause: error instanceof Error ? error : undefined,
-            details: { middleware: mw.name, phase: 'beforeRequest' },
+            cause: originalError,
+            details: {
+              middleware: mw.name,
+              phase: 'beforeRequest',
+              originalStack: originalError.stack,
+            },
           }
         );
+        throw wrappedError;
       }
     }
 
@@ -177,14 +183,20 @@ export class MiddlewareManager {
       try {
         currentResponse = await mw.afterResponse(currentResponse, context);
       } catch (error) {
-        throw new SutraError(
-          `Middleware "${mw.name}" failed in afterResponse: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        const originalError = error instanceof Error ? error : new Error(String(error));
+        const wrappedError = new SutraError(
+          `Middleware "${mw.name}" failed in afterResponse: ${originalError.message}`,
           'MIDDLEWARE_ERROR',
           {
-            cause: error instanceof Error ? error : undefined,
-            details: { middleware: mw.name, phase: 'afterResponse' },
+            cause: originalError,
+            details: {
+              middleware: mw.name,
+              phase: 'afterResponse',
+              originalStack: originalError.stack,
+            },
           }
         );
+        throw wrappedError;
       }
     }
 
@@ -337,20 +349,35 @@ export function createRateLimitMiddleware(options: {
 
   // Use TimeWindowCounter for O(1) operations instead of O(n) array shift
   const requestCounter = new TimeWindowCounter(60000, requestsPerMinute + 10);
-  const tokenCounter = tokensPerMinute
-    ? new TimeWindowCounter(60000, Math.ceil(tokensPerMinute / 100) + 10)
+
+  // Token tracking using circular buffer for O(1) cleanup
+  // Store { timestamp, tokens } entries for proper token accounting
+  interface TokenEntry {
+    timestamp: number;
+    tokens: number;
+  }
+
+  // Use CircularBuffer directly for token tracking with proper capacity
+  const tokenBuffer = tokensPerMinute
+    ? new CircularBuffer<TokenEntry>(Math.max(1000, Math.ceil(tokensPerMinute / 100)))
     : null;
 
-  // Track token totals within window
-  let tokenTotal = 0;
-  const tokenTimestamps: Array<{ time: number; tokens: number }> = [];
-
-  const cleanTokens = () => {
+  const getTokensInWindow = (): number => {
+    if (!tokenBuffer) return 0;
     const cutoff = Date.now() - 60000;
-    while (tokenTimestamps.length > 0 && tokenTimestamps[0].time < cutoff) {
-      tokenTotal -= tokenTimestamps[0].tokens;
-      tokenTimestamps.shift();
-    }
+
+    // Remove expired entries from front (O(k) where k = expired count)
+    tokenBuffer.removeWhile(entry => entry.timestamp < cutoff);
+
+    // Sum remaining tokens (O(n) but n is bounded by capacity)
+    return tokenBuffer.sum(entry => entry.tokens);
+  };
+
+  const getTimeUntilTokensAllowed = (): number => {
+    if (!tokenBuffer || tokenBuffer.isEmpty) return 0;
+    const oldest = tokenBuffer.peek();
+    if (!oldest) return 0;
+    return Math.max(0, 60000 - (Date.now() - oldest.timestamp));
   };
 
   return {
@@ -369,12 +396,10 @@ export function createRateLimitMiddleware(options: {
       }
 
       // Check token rate (if configured)
-      if (tokensPerMinute && tokenCounter) {
-        cleanTokens();
-        if (tokenTotal >= tokensPerMinute) {
-          const waitTime = tokenTimestamps.length > 0
-            ? 60000 - (Date.now() - tokenTimestamps[0].time)
-            : 60000;
+      if (tokensPerMinute && tokenBuffer) {
+        const currentTokens = getTokensInWindow();
+        if (currentTokens >= tokensPerMinute) {
+          const waitTime = getTimeUntilTokensAllowed();
           throw new SutraError(
             `Token rate limit exceeded: ${tokensPerMinute} tokens per minute`,
             'RATE_LIMITED',
@@ -388,11 +413,9 @@ export function createRateLimitMiddleware(options: {
     },
 
     afterResponse: async (response, _context) => {
-      if (response.usage && tokensPerMinute) {
-        cleanTokens();
-        tokenTotal += response.usage.total_tokens;
-        tokenTimestamps.push({
-          time: Date.now(),
+      if (response.usage && tokensPerMinute && tokenBuffer) {
+        tokenBuffer.push({
+          timestamp: Date.now(),
           tokens: response.usage.total_tokens,
         });
       }

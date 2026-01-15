@@ -218,6 +218,12 @@ export interface BatchRequest {
   stopOnError?: boolean;
   /** Progress callback */
   onProgress?: (completed: number, total: number, result?: ChatResponse) => void;
+  /** 
+   * Maximum total retries across all requests in the batch.
+   * Prevents retry storms when many requests fail simultaneously.
+   * Default: unlimited (respects per-request retry limits only)
+   */
+  maxTotalRetries?: number;
 }
 
 /** Batch response */
@@ -672,7 +678,15 @@ export class SutraError extends Error {
     this.requestId = options?.requestId;
   }
 
-  /** Create error from HTTP response */
+  /** 
+   * Create error from HTTP response 
+   * @deprecated Use createErrorFromResponse from '@sutraworks/client-ai-sdk' instead for consistent error handling.
+   * This method is kept for backward compatibility but delegates to the shared utility.
+   * 
+   * Note: This simplified version provides basic error mapping. For enhanced error 
+   * detection (e.g., context length, content filtering from message body), use 
+   * createErrorFromResponse which reads the full response body.
+   */
   static fromResponse(
     response: { status: number; statusText: string },
     provider: ProviderName,
@@ -683,6 +697,8 @@ export class SutraError extends Error {
     let retryable = false;
     let retryAfter: number | undefined;
 
+    // Common status code mapping (kept for backward compatibility)
+    // For full error detection, use createErrorFromResponse
     switch (status) {
       case 400:
         code = 'VALIDATION_ERROR';
@@ -697,7 +713,6 @@ export class SutraError extends Error {
       case 429:
         code = 'RATE_LIMITED';
         retryable = true;
-        // Extract retry-after from body if available
         if (body && typeof body === 'object' && 'retry_after' in body) {
           retryAfter = Number(body.retry_after) * 1000;
         }

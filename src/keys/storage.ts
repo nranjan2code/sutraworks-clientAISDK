@@ -18,6 +18,8 @@ export interface IKeyStorage {
   clear(): Promise<void>;
   list(): Promise<ProviderName[]>;
   getMeta(provider: ProviderName): Promise<StoredKeyMeta | null>;
+  /** Close any open connections (optional, for IndexedDB) */
+  close?(): void;
 }
 
 /**
@@ -591,6 +593,17 @@ export class IndexedDBStorage implements IKeyStorage {
         });
       };
     });
+  }
+
+  /**
+   * Close the database connection
+   * Should be called when the storage is no longer needed to prevent memory leaks
+   */
+  close(): void {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
   }
 }
 

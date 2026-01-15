@@ -1,8 +1,33 @@
 import { pricingRegistry } from './pricing';
 
 /**
- * Token counting utilities
+ * Token counting utilities for cost estimation
  * @module utils/tokens
+ * 
+ * @warning ESTIMATION ACCURACY LIMITATIONS
+ * 
+ * These utilities provide CLIENT-SIDE token estimates using simple heuristics
+ * (approximately 4 characters per token for English text). These estimates are
+ * suitable for:
+ *   - UI display of approximate costs before sending a request
+ *   - Usage budgeting and alerts
+ *   - Rough capacity planning
+ * 
+ * These estimates are NOT suitable for:
+ *   - Billing reconciliation (use provider API response usage data)
+ *   - Precise context window management (estimates can be off by 20-50%)
+ *   - Non-English text (different character-to-token ratios)
+ *   - Code or JSON (significantly different tokenization patterns)
+ * 
+ * For accurate token counts, always use the `usage` field returned in API responses
+ * from providers (e.g., `response.usage.prompt_tokens`, `response.usage.completion_tokens`).
+ * 
+ * The 4 char/token heuristic is based on GPT tokenization for English prose. Actual
+ * ratios vary significantly:
+ *   - English prose: ~4 chars/token
+ *   - Code: ~2-3 chars/token (due to operators, punctuation)
+ *   - Asian languages: ~1-2 chars/token (due to multi-byte characters)
+ *   - JSON/structured data: ~3 chars/token
  */
 
 /**

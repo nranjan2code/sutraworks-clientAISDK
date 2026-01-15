@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.3-blue.svg" alt="Version 2.0.3" />
+  <img src="https://img.shields.io/badge/version-2.1.0-blue.svg" alt="Version 2.1.0" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License" />
   <img src="https://img.shields.io/badge/tests-554%20passing-brightgreen.svg" alt="Tests Passing" />
@@ -453,6 +453,24 @@ const response = await ai.chat({
   messages: [{ role: 'user', content: 'Hello!' }]
 });
 ```
+
+### CORS Configuration for Browser Usage
+
+When using Ollama from a browser, you need to configure CORS to allow requests from your origin:
+
+```bash
+# Start Ollama with CORS enabled (allows all origins)
+OLLAMA_ORIGINS="*" ollama serve
+
+# Or specify your application's origin
+OLLAMA_ORIGINS="http://localhost:3000,https://your-app.com" ollama serve
+```
+
+> [!TIP]
+> On macOS, you can set this persistently by adding to your `.zshrc` or `.bashrc`:
+> ```bash
+> export OLLAMA_ORIGINS="*"
+> ```
 
 ---
 

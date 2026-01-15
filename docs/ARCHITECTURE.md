@@ -1,8 +1,8 @@
 # Architecture Guide
 
-This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.0.1).
+This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.1.0).
 
-> **Test Stats**: 551 tests | 81% coverage | 17 test files
+> **Test Stats**: 554 tests | 81% coverage | 18 test files
 
 ## System Overview
 
@@ -44,12 +44,12 @@ All requests to the SDK pass through a middleware chain before reaching a provid
 ### 3. Provider Registry (`src/core/registry.ts`)
 Manages the lifecycle of AI provider instances.
 - **Dynamic Loading**: Providers are lazy-loaded only when requested.
-- **Circuit Breakers**: Each provider is wrapped in a circuit breaker to fail fast during outages.
+- **Circuit Breakers**: Each provider is wrapped in a circuit breaker (configured via `CIRCUIT_BREAKER_DEFAULTS`) to fail fast during outages. All `chat()` requests are protected via `executeWithCircuitBreaker()`.
 - **Plugin System**: Allows registering custom providers at runtime without forking the SDK.
 
 ### 4. Key Manager (`src/keys/manager.ts`)
 Handles the secure storage and retrieval of API keys.
-- **Storage Abstraction**: Supports `Memory`, `LocalStorage`, `SessionStorage`, and `IndexedDB`.
+- **Storage Abstraction**: Supports `Memory`, `LocalStorage`, `SessionStorage`, and `IndexedDB` (with `close()` for cleanup).
 - **Encryption**: Uses AES-256-GCM to encrypt keys at rest using a user-provided password or ephemeral keys.
 - **Provider-Specific Validation**: Validates key formats for each provider (OpenAI `sk-`, Anthropic `sk-ant-`, etc.).
 - **Key Rotation**: Secure key rotation via `rotateKey()` with fingerprint tracking.

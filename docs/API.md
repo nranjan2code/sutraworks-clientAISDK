@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for Sutraworks Client AI SDK v2.0.
+Complete API documentation for Sutraworks Client AI SDK v2.1.
 
 ## Table of Contents
 
@@ -47,6 +47,8 @@ const ai = new SutraAI(config?: SutraConfig);
 | `deduplicateRequests` | `boolean` | `true` | Prevent duplicate concurrent requests |
 | `enableValidation` | `boolean` | `true` | Enable request validation middleware |
 | `debug` | `boolean` | `false` | Enable debug logging (never logs keys) |
+
+> **Note**: Configuration values are validated at construction time. Invalid `timeout` (non-positive), `maxRetries` (negative), or `baseUrl` (invalid URL) will throw an error.
 
 ### Lifecycle Methods
 
@@ -460,6 +462,7 @@ console.log(`Total tokens: ${results.summary.totalTokens}`);
 | `concurrency` | `number` | `5` | Max concurrent requests |
 | `stopOnError` | `boolean` | `false` | Stop on first error |
 | `onProgress` | `(completed, total) => void` | - | Progress callback |
+| `maxTotalRetries` | `number` | - | Max total retries across all requests (prevents retry storms) |
 
 #### BatchResponse
 

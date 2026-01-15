@@ -96,6 +96,7 @@ export abstract class BaseProvider {
 
   /**
    * Make an HTTP request to the provider
+   * Supports request cancellation via AbortSignal
    */
   protected async makeRequest<T>(
     endpoint: string,
@@ -110,6 +111,16 @@ export abstract class BaseProvider {
     const apiKey = await this.getApiKey();
     const url = `${this.config.baseUrl}${endpoint}`;
 
+    /**
+     * Header merge order (later values override earlier):
+     * 1. Default Content-Type (lowest priority)
+     * 2. Provider auth headers (e.g., Authorization, x-api-key)
+     * 3. Provider config headers (from SutraConfig.providers[name].headers)
+     * 4. Request-specific headers (highest priority, from ChatRequest.headers)
+     * 
+     * This allows request-level headers to override config-level headers,
+     * which in turn override default headers.
+     */
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...this.getAuthHeaders(apiKey),
@@ -122,9 +133,11 @@ export abstract class BaseProvider {
       controller.abort();
     }, this.config.timeout ?? 60000);
 
-    // Link to external signal if provided
+    // Link to external signal if provided, with proper cleanup
+    let abortHandler: (() => void) | null = null;
     if (options.signal) {
-      options.signal.addEventListener('abort', () => controller.abort());
+      abortHandler = () => controller.abort();
+      options.signal.addEventListener('abort', abortHandler);
     }
 
     try {
@@ -155,6 +168,11 @@ export abstract class BaseProvider {
       }
 
       throw createErrorFromException(error, this.name);
+    } finally {
+      // Always remove abort listener to prevent memory leaks
+      if (abortHandler && options.signal) {
+        options.signal.removeEventListener('abort', abortHandler);
+      }
     }
   }
 
