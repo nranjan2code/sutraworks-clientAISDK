@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for Sutraworks Client AI SDK v2.1.
+Complete API documentation for Sutraworks Client AI SDK v2.2.
 
 ## Table of Contents
 

@@ -1,8 +1,8 @@
 # Architecture Guide
 
-This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.1.0).
+This document provides a high-level overview of the internal architecture of the `@sutraworks/client-ai-sdk` (v2.2.0).
 
-> **Test Stats**: 554 tests | 81% coverage | 18 test files
+> **Test Stats**: 583 tests | 81% coverage | 20 test files
 
 ## System Overview
 
@@ -127,20 +127,20 @@ sequenceDiagram
 
 ## Supported Providers
 
-| Provider | Chat | Stream | Embed | Vision | Local |
-|----------|:----:|:------:|:-----:|:------:|:-----:|
-| OpenAI | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Anthropic | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Google Gemini | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Ollama | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Groq | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Mistral | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Cohere | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Together AI | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Fireworks | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Perplexity | ✅ | ✅ | ❌ | ❌ | ❌ |
-| DeepSeek | ✅ | ✅ | ❌ | ❌ | ❌ |
-| xAI (Grok) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Provider | Chat | Stream | Embed | Vision | Tools | Local |
+|----------|:----:|:------:|:-----:|:------:|:-----:|:-----:|
+| OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Anthropic | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
+| Google Gemini | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Ollama | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Groq | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Mistral | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Cohere | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Together AI | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Fireworks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Perplexity | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| DeepSeek | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| xAI (Grok) | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
 
 ## Development Commands
 
