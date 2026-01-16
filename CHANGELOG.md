@@ -5,6 +5,47 @@ All notable changes to the Sutraworks Client AI SDK will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-16
+
+### 🚀 Complete Provider Coverage - 12 Providers
+
+This release completes the SDK's provider coverage by implementing the DeepSeek and xAI provider classes that were previously only defined as model configurations.
+
+### Added
+
+#### New Provider Implementations
+- **DeepSeekProvider**: Full implementation for DeepSeek AI models
+  - DeepSeek V4 with Silent Reasoning module
+  - DeepSeek R1 open-source reasoning model
+  - DeepSeek V3.2, Chat, and Coder variants
+  - OpenAI-compatible API with streaming support
+  - Tool calling support
+  
+- **XAIProvider**: Full implementation for xAI (Grok) models
+  - Grok 4.x series with vision and tool support
+  - Grok 3 and 2 variants
+  - OpenAI-compatible API with streaming support
+  - Vision capability for Grok 4.x and Grok 2 Vision
+
+#### Testing
+- Added comprehensive unit tests for DeepSeekProvider (8 tests)
+- Added comprehensive unit tests for XAIProvider (9 tests)
+- Total test count increased to **583 tests** (up from 554)
+
+### Changed
+
+- **Provider Registry**: Now registers 12 built-in providers (up from 10)
+- **Test Assertions**: Updated registry tests to expect 12 providers
+
+### Technical Debt Resolved
+
+This release eliminates the following identified technical debt:
+- ✅ DeepSeek model definitions now have a working provider implementation
+- ✅ xAI model definitions now have a working provider implementation
+- ✅ All 12 configured providers are now fully operational
+
+---
+
 ## [2.1.0] - 2026-01-15
 
 ### 🎯 Zero Technical Debt Release

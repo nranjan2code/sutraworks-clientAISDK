@@ -20,7 +20,7 @@
  */
 
 /** SDK Version - synchronized with package.json */
-export const VERSION = '2.1.0';
+export const VERSION = '2.2.0';
 
 // Core modules
 export { SutraAI } from './core/client';
@@ -62,6 +62,8 @@ export { CohereProvider } from './providers/cohere';
 export { TogetherProvider } from './providers/together';
 export { FireworksProvider } from './providers/fireworks';
 export { PerplexityProvider } from './providers/perplexity';
+export { DeepSeekProvider } from './providers/deepseek';
+export { XAIProvider } from './providers/xai';
 
 // Middleware
 export {

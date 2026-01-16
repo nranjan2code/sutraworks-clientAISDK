@@ -93,6 +93,8 @@ describe('ProviderRegistry', () => {
       expect(providers).toContain('together');
       expect(providers).toContain('fireworks');
       expect(providers).toContain('perplexity');
+      expect(providers).toContain('deepseek');
+      expect(providers).toContain('xai');
     });
 
     it('should check if provider exists', () => {
@@ -189,7 +191,7 @@ describe('ProviderRegistry', () => {
     it('should get all provider health', () => {
       const healthList = registry.getAllProviderHealth();
       expect(Array.isArray(healthList)).toBe(true);
-      expect(healthList.length).toBe(10); // 10 built-in providers
+      expect(healthList.length).toBe(12); // 12 built-in providers
     });
 
     it('should get healthy providers', () => {
@@ -246,7 +248,7 @@ describe('ProviderRegistry', () => {
     it('should get all metrics as Map', () => {
       const allMetrics = registry.getAllMetrics();
       expect(allMetrics).toBeInstanceOf(Map);
-      expect(allMetrics.size).toBe(10); // 10 built-in providers
+      expect(allMetrics.size).toBe(12); // 12 built-in providers
     });
   });
 

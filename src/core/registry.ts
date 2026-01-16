@@ -17,6 +17,8 @@ import { CohereProvider } from '../providers/cohere';
 import { TogetherProvider } from '../providers/together';
 import { FireworksProvider } from '../providers/fireworks';
 import { PerplexityProvider } from '../providers/perplexity';
+import { DeepSeekProvider } from '../providers/deepseek';
+import { XAIProvider } from '../providers/xai';
 import { ConfigManager } from './config';
 import { EventEmitter } from '../utils/events';
 import { CircuitBreaker } from '../utils/retry';
@@ -142,6 +144,8 @@ export class ProviderRegistry {
     this.providerClasses.set('together', TogetherProvider);
     this.providerClasses.set('fireworks', FireworksProvider);
     this.providerClasses.set('perplexity', PerplexityProvider);
+    this.providerClasses.set('deepseek', DeepSeekProvider);
+    this.providerClasses.set('xai', XAIProvider);
 
     // Initialize metrics for built-in providers
     for (const name of this.providerClasses.keys()) {
@@ -254,10 +258,11 @@ export class ProviderRegistry {
    */
   unregisterProvider(name: ProviderName): boolean {
     // Cannot unregister built-in providers
-    const builtIn = ['openai', 'anthropic', 'google', 'ollama', 'mistral', 'groq', 'cohere', 'together', 'fireworks', 'perplexity'];
+    const builtIn = ['openai', 'anthropic', 'google', 'ollama', 'mistral', 'groq', 'cohere', 'together', 'fireworks', 'perplexity', 'deepseek', 'xai'];
     if (builtIn.includes(name)) {
       return false;
     }
+
 
     this.providerClasses.delete(name);
     this.providerConfigs.delete(name);
